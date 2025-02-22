@@ -1,0 +1,71 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.4.3'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.jmair'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Actuator: 애플리케이션 모니터링 및 메트릭 제공
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // JPA
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // OAuth2 Client
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+    // Security
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    // Validation
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // Web
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // Lombok (컴파일 전용)
+    compileOnly 'org.projectlombok:lombok'
+
+    // DevTools: 개발 시 자동 재시작 등 편의 기능 제공 (개발 전용)
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+    // Docker Compose (개발 전용)
+    developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
+
+    // PostgreSQL JDBC 드라이버 (런타임 전용)
+    runtimeOnly 'org.postgresql:postgresql'
+
+    // Lombok
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // TEST
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // API Tool (Swagger)
+    implementation group: 'org.springdoc', name: 'springdoc-openapi-starter-webmvc-ui', version: '2.6.0'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
