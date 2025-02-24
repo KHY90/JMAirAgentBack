@@ -7,9 +7,11 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import jdk.jfr.Timestamp;
 
 @Entity
+@Table(name = "Notice")
 public class Notice {
 
 	@Id
@@ -23,7 +25,7 @@ public class Notice {
 	@Column(nullable = false)
 	private LocalDateTime noticePostTime;
 	private LocalDateTime noticeDeleteTime;
-	private boolean noticeStatus;
+	private boolean status;
 
 
 }

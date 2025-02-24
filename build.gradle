@@ -48,13 +48,10 @@ dependencies {
     // DevTools: 개발 시 자동 재시작 등 편의 기능 제공 (개발 전용)
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
-    // Docker Compose (개발 전용)
-    developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
+    // MySQL JDBC 드라이버 (런타임 전용)
+    runtimeOnly 'com.mysql:mysql-connector-j'
 
-    // PostgreSQL JDBC 드라이버 (런타임 전용)
-    runtimeOnly 'org.postgresql:postgresql'
-
-    // Lombok
+    // Lombok Annotation Processor
     annotationProcessor 'org.projectlombok:lombok'
 
     // TEST
@@ -65,6 +62,11 @@ dependencies {
     // API Tool (Swagger)
     implementation group: 'org.springdoc', name: 'springdoc-openapi-starter-webmvc-ui', version: '2.6.0'
 }
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
 
 tasks.named('test') {
     useJUnitPlatform()
