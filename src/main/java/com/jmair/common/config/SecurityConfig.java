@@ -2,6 +2,7 @@ package com.jmair.common.config;
 
 import java.util.Arrays;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -17,20 +18,29 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @EnableWebSecurity
 public class SecurityConfig {
 
-	// 비밀번호 인코더 빈
+	@Value("${spring.cors.allowed-origins}")
+	private String allowedOrigins;
+
+	@Value("${spring.cors.allowed-methods}")
+	private String allowedMethods;
+
+	@Value("${spring.cors.allowed-headers}")
+	private String allowedHeaders;
+
+	// 비밀번호 인코더
 	@Bean
 	public PasswordEncoder passwordEncoder() {
-		return new BCryptPasswordEncoder();
+		// 기본값은 10인데 12로 올려서 보안 강화. 다만 연산 속도 느려짐
+		return new BCryptPasswordEncoder(12);
 	}
 
 	// SecurityFilterChain을 통한 보안 설정
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http
-			.cors() // CORS 설정 적용
+			.cors()
 			.and()
 			.csrf().disable();
-		// 추가 보안 설정 (인증/인가 등) 필요 시 여기서 구성
 		return http.build();
 	}
 
@@ -38,9 +48,11 @@ public class SecurityConfig {
 	@Bean
 	public CorsConfigurationSource corsConfigurationSource() {
 		CorsConfiguration configuration = new CorsConfiguration();
-		configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
-		configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-		configuration.setAllowedHeaders(Arrays.asList("*"));
+		configuration.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
+		configuration.setAllowedMethods(Arrays.asList(allowedMethods.split(",")));
+		configuration.setAllowedHeaders(Arrays.asList(allowedHeaders.split(",")));
+		configuration.setAllowCredentials(true);
+
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 		source.registerCorsConfiguration("/**", configuration);
 		return source;
