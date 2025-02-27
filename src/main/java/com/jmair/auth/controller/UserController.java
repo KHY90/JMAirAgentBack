@@ -9,8 +9,10 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.jmair.auth.dto.LoginDTO;
@@ -92,4 +94,16 @@ public class UserController {
 		}
 	}
 
+	// 회원탈퇴
+	@PutMapping("/delete")
+	public ResponseEntity<?> deleteUser(@RequestParam String userLogin) {
+		try {
+			userService.deleteUser(userLogin);
+			return ResponseEntity.ok("회원 탈퇴가 완료되었습니다.");
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("회원 탈퇴 중 오류가 발생했습니다.");
+		}
+	}
 }

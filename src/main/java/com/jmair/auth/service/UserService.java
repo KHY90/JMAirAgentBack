@@ -43,10 +43,14 @@ public class UserService {
 		userRepository.save(user);
 	}
 
-	// 로그인 처리 - JWT 토큰 반환
+	// 로그인 - JWT 토큰 반환
 	public Tokens login(LoginDTO loginDTO) {
 		User user = userRepository.findByUserLogin(loginDTO.getUserLogin())
 			.orElseThrow(() -> new IllegalArgumentException("아이디 또는 비밀번호가 일치하지 않습니다."));
+
+		if (!user.isStatus()) {
+			throw new IllegalArgumentException("탈퇴한 회원입니다. 로그인할 수 없습니다.");
+		}
 
 		if (!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
 			throw new IllegalArgumentException("아이디 또는 비밀번호가 일치하지 않습니다.");
@@ -62,6 +66,19 @@ public class UserService {
 	public User getUserByLogin(String userLogin) {
 		return userRepository.findByUserLogin(userLogin)
 			.orElseThrow(() -> new IllegalArgumentException("유저 정보를 찾을 수 없습니다."));
+	}
+
+	// 회원탈퇴
+	public void deleteUser(String userLogin) {
+		User user = userRepository.findByUserLogin(userLogin)
+			.orElseThrow(() -> new IllegalArgumentException("유저 정보를 찾을 수 없습니다."));
+
+		if (!user.isStatus()) {
+			throw new IllegalArgumentException("이미 탈퇴한 회원입니다.");
+		}
+
+		user.setStatus(false);
+		userRepository.save(user);
 	}
 
 }
