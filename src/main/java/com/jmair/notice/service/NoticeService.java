@@ -44,7 +44,7 @@ public class NoticeService {
 		notice.setNoticeWriter(currentUser.getUserName());
 		notice.setNoticePostTime(LocalDateTime.now());
 		notice.setStatus(true);
-		notice.setViews(0);
+		// notice.setViews(0);
 
 		Notice saved = noticeRepository.save(notice);
 
@@ -54,7 +54,7 @@ public class NoticeService {
 		result.setContent(saved.getNoticeContent());
 		result.setWriter(saved.getNoticeWriter());
 		result.setPostTime(saved.getNoticePostTime());
-		result.setViews(saved.getViews());
+		// result.setViews(saved.getViews());
 		result.setStatus(saved.isStatus());
 		result.setDeleteTime(saved.getNoticeDeleteTime());
 		return result;
@@ -70,18 +70,55 @@ public class NoticeService {
 			dto.setContent(notice.getNoticeContent());
 			dto.setWriter(notice.getNoticeWriter());
 			dto.setPostTime(notice.getNoticePostTime());
-			dto.setViews(notice.getViews());
+			// dto.setViews(notice.getViews());
 			return dto;
 		}).collect(Collectors.toList());
 	}
 
 	// 상세조회
 	public NoticeDTO getDetailNotice(Integer noticeId) {
-
-
+		Notice notice = noticeRepository.findById(noticeId)
+			.orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
+		NoticeDTO dto = new NoticeDTO();
+		dto.setId(notice.getNoticeId());
+		dto.setTitle(notice.getNoticeTitle());
+		dto.setContent(notice.getNoticeContent());
+		dto.setWriter(notice.getNoticeWriter());
+		dto.setPostTime(notice.getNoticePostTime());
+		// dto.setViews(notice.getViews());
+		dto.setStatus(notice.isStatus());
+		dto.setNoticeEditTime(notice.getNoticeEditTime());
+		return dto;
 	}
 
 	// 수정
+	public NoticeDTO editNotice(Integer noticeId, NoticeDTO noticeDTO) {
+		Notice notice = noticeRepository.findById(noticeId)
+			.orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
 
-	// 삭제(소프트삭제)
+		notice.setNoticeTitle(noticeDTO.getTitle());
+		notice.setNoticeContent(noticeDTO.getContent());
+
+		notice.setStatus(noticeDTO.getStatus());
+		Notice updated = noticeRepository.save(notice);
+
+		NoticeDTO dto = new NoticeDTO();
+		dto.setId(updated.getNoticeId());
+		dto.setTitle(updated.getNoticeTitle());
+		dto.setContent(updated.getNoticeContent());
+		dto.setWriter(updated.getNoticeWriter());
+		// dto.setViews(updated.getViews());
+		dto.setStatus(updated.isStatus());
+		dto.setNoticeEditTime(LocalDateTime.now());
+		return dto;
+	}
+
+	// 삭제
+	public void deleteNotice(Integer noticeId) {
+		Notice notice = noticeRepository.findById(noticeId)
+			.orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
+		notice.setStatus(false);
+		notice.setNoticeDeleteTime(LocalDateTime.now());
+		noticeRepository.save(notice);
+	}
 }

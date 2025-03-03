@@ -29,10 +29,10 @@ public class NoticeDTO {
 
 	@NotNull(message = "등록시간은 필수입니다.")
 	private LocalDateTime postTime;
-
+	private LocalDateTime noticeEditTime;
 	private LocalDateTime deleteTime;
 
-	private int views;
+	// private int views;
 
 	@NotNull(message = "상태값은 필수입니다.")
 	private Boolean status;

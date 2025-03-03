@@ -1,23 +1,12 @@
 package com.jmair.notice.controller;
 
-import static org.springframework.data.jpa.domain.AbstractPersistable_.*;
-
 import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.bind.annotation.*;
 import com.jmair.notice.dto.NoticeDTO;
 import com.jmair.notice.service.NoticeService;
-
 import jakarta.validation.Valid;
 
 @RestController
@@ -34,30 +23,69 @@ public class NoticeController {
 	// 등록
 	@PostMapping("/post")
 	public ResponseEntity<?> createNotice(@Valid @RequestBody NoticeDTO noticeDTO) {
-		NoticeDTO createdNotice = noticeService.createNotice(noticeDTO);
-		return ResponseEntity.ok(createdNotice);
+		try {
+			NoticeDTO createdNotice = noticeService.createNotice(noticeDTO);
+			return ResponseEntity.ok(createdNotice);
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		} catch(Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body("공지사항 등록 중 오류가 발생했습니다.");
+		}
 	}
 
 	// 전체 조회
 	@GetMapping
-	public ResponseEntity<List<NoticeDTO>> getAllNotices() {
-		List<NoticeDTO> notices = noticeService.getAllNotices();
-		return ResponseEntity.ok(notices);
+	public ResponseEntity<?> getAllNotices() {
+		try {
+			List<NoticeDTO> notices = noticeService.getAllNotices();
+			return ResponseEntity.ok(notices);
+		} catch(Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body("공지사항 조회 중 오류가 발생했습니다.");
+		}
 	}
 
-	// 상세조회
+	// 상세 조회
 	@GetMapping("/{noticeId}")
-	public ResponseEntity<NoticeDTO> getNoticeById(@PathVariable Integer noticeId) {
-		NoticeDTO noticeDetail = noticeService.getDetailNotice();
-		return ResponseEntity.ok(noticeDetail);
+	public ResponseEntity<?> getNoticeById(@PathVariable Integer noticeId) {
+		try {
+			NoticeDTO noticeDetail = noticeService.getDetailNotice(noticeId);
+			return ResponseEntity.ok(noticeDetail);
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+				.body(e.getMessage());
+		} catch(Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body("공지사항 상세 조회 중 오류가 발생했습니다.");
+		}
 	}
 
 	// 수정
 	@PutMapping("/{noticeId}/edit")
-	public ResponseEntity<NoticeDTO> editNotice(@PathVariable Integer noticeId, @Valid @RequestBody NoticeDTO noticeDTO) {
-
+	public ResponseEntity<?> editNotice(@PathVariable Integer noticeId, @Valid @RequestBody NoticeDTO noticeDTO) {
+		try {
+			NoticeDTO updatedNotice = noticeService.editNotice(noticeId, noticeDTO);
+			return ResponseEntity.ok(updatedNotice);
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		} catch(Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body("공지사항 수정 중 오류가 발생했습니다.");
+		}
 	}
 
-	// 삭제(소프트)
-	@DeleteMapping("{noticeId}/delete")
+	// 삭제 (소프트 삭제)
+	@DeleteMapping("/{noticeId}/delete")
+	public ResponseEntity<?> deleteNotice(@PathVariable Integer noticeId) {
+		try {
+			noticeService.deleteNotice(noticeId);
+			return ResponseEntity.ok("공지사항이 삭제되었습니다.");
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		} catch(Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body("공지사항 삭제 중 오류가 발생했습니다.");
+		}
+	}
 }

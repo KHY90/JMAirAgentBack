@@ -30,9 +30,10 @@ public class Notice {
 	@Timestamp
 	@Column(nullable = false)
 	private LocalDateTime noticePostTime;
+	private LocalDateTime noticeEditTime;
 	private LocalDateTime noticeDeleteTime;
 	@Column(nullable = false)
 	private boolean status;
-	private int views;
+	// private int views;
 
 }
