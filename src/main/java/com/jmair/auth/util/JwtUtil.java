@@ -1,5 +1,6 @@
 package com.jmair.auth.util;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -7,8 +8,10 @@ import org.springframework.stereotype.Component;
 
 import com.jmair.auth.entity.User;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 
 @Component
 public class JwtUtil {
@@ -36,5 +39,14 @@ public class JwtUtil {
 			.setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_VALIDITY))
 			.signWith(SignatureAlgorithm.HS256, secretKey)
 			.compact();
+	}
+
+	public String validateAndExtractUserLogin(String token) {
+		Claims claims = Jwts.parserBuilder()
+			.setSigningKey(Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8)))
+			.build()
+			.parseClaimsJws(token)
+			.getBody();
+		return claims.getSubject();
 	}
 }

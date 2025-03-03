@@ -1,9 +1,14 @@
 package com.jmair.auth.service;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.jmair.auth.dto.LoginDTO;
+import com.jmair.auth.dto.SocialDTO;
 import com.jmair.auth.dto.Tokens;
 import com.jmair.auth.dto.UserDTO;
 import com.jmair.auth.dto.UserGrade;
@@ -27,7 +32,6 @@ public class UserService {
 		if (userRepository.existsByUserLogin(userDTO.getUserLogin())) {
 			throw new IllegalArgumentException("이미 존재하는 회원입니다.");
 		}
-
 		// 비밀번호를 BCrypt 해싱하여 저장
 		String encodedPassword = passwordEncoder.encode(userDTO.getPassword());
 
@@ -60,6 +64,40 @@ public class UserService {
 		String refreshToken = jwtUtil.generateRefreshToken(user);
 
 		return new Tokens(accessToken, refreshToken);
+	}
+
+	// 네이버 로그인
+	public Map<String, Object> naverLogin(SocialDTO socialDTO) {
+		String userLogin = socialDTO.getUserLogin();
+		String name = socialDTO.getUserName();
+		String email = socialDTO.getUserEmail();
+
+		User user = userRepository.findByUserLogin(userLogin).orElse(null);
+
+		if (user == null) {
+			user = new User();
+			user.setUserLogin(userLogin);
+			user.setUserName(name);
+			user.setEmail(email);
+			String dummyPassword = UUID.randomUUID().toString();
+			user.setPassword(passwordEncoder.encode(dummyPassword));
+			user.setUserGrade(UserGrade.USER);
+			user.setStatus(true);
+			user = userRepository.save(user);
+		}
+
+		String accessToken = jwtUtil.generateAccessToken(user);
+		String refreshToken = jwtUtil.generateRefreshToken(user);
+
+		Map<String, Object> result = new HashMap<>();
+		result.put("message", "네이버 로그인 성공");
+		result.put("accessToken", accessToken);
+		result.put("refreshToken", refreshToken);
+		result.put("user", Map.of(
+			"userLogin", user.getUserLogin(),
+			"userName", user.getUserName()
+		));
+		return result;
 	}
 
 	// 로그인한 사용자 정보 조회
