@@ -109,9 +109,23 @@ public class UserController {
 			.path("/")
 			.maxAge(0)
 			.build();
+		ResponseCookie stateCooke = ResponseCookie.from("oauth_state", "")
+			.httpOnly(true)
+			.secure(false) // 배포시 true
+			.path("/")
+			.maxAge(0)
+			.build();
+		ResponseCookie kakaoStateCooke = ResponseCookie.from("kakao_oauth_state", "")
+			.httpOnly(true)
+			.secure(false) // 배포시 true
+			.path("/")
+			.maxAge(0)
+			.build();
 
 		response.addHeader("Set-Cookie", accessCookie.toString());
 		response.addHeader("Set-Cookie", refreshCookie.toString());
+		response.addHeader("Set-Cookie", stateCooke.toString());
+		response.addHeader("Set-Cookie", kakaoStateCooke.toString());
 
 		return ResponseEntity.ok("로그아웃 성공");
 	}

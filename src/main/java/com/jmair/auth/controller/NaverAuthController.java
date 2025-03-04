@@ -2,7 +2,6 @@ package com.jmair.auth.controller;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +11,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
+
 import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
@@ -48,7 +48,24 @@ public class NaverAuthController {
 
 	@GetMapping("/naver/callback")
 	public Mono<ResponseEntity<?>> naverCallback(@RequestParam("code") String code,
-		@RequestParam("state") String state) {
+		@RequestParam("state") String state,
+		HttpServletRequest request) {
+
+		// state 검증
+		String storedState = null;
+		if (request.getCookies() != null) {
+			for (Cookie cookie : request.getCookies()) {
+				if ("oauth_state".equals(cookie.getName())) {
+					storedState = cookie.getValue();
+					break;
+				}
+			}
+		}
+		if (storedState == null || !storedState.equals(state)) {
+			return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+				.body("잘못된 state값 입니다."));
+		}
+
 		// 1. 네이버 토큰 발급 URL 구성
 		String tokenUrl = naverUri
 			+ "?grant_type=authorization_code"
@@ -124,7 +141,7 @@ public class NaverAuthController {
 			);
 	}
 
-	@GetMapping("/naver/current")
+	@GetMapping("/current")
 	public ResponseEntity<?> getCurrentUser(HttpServletRequest request) {
 		String accessToken = null;
 		if (request.getCookies() != null) {

@@ -50,9 +50,6 @@ dependencies {
     // Lombok (컴파일 전용)
     compileOnly 'org.projectlombok:lombok'
 
-//    // DevTools: 개발 시 자동 재시작 등 편의 기능 제공 (개발 전용)
-//    developmentOnly 'org.springframework.boot:spring-boot-devtools'
-
     // MySQL JDBC 드라이버 (런타임 전용)
     runtimeOnly 'com.mysql:mysql-connector-j'
 
