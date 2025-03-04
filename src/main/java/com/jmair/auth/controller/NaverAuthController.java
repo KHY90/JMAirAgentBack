@@ -2,8 +2,11 @@ package com.jmair.auth.controller;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -37,11 +40,17 @@ public class NaverAuthController {
 	@Value("${spring.naver.redirect-uri}")
 	private String naverRedirectUri;
 
+	@Value("${spring.naver.uri}")
+	private String naverUri;
+
+	@Value("${spring.naver.check-id}")
+	private String checkIdUri;
+
 	@GetMapping("/naver/callback")
 	public Mono<ResponseEntity<?>> naverCallback(@RequestParam("code") String code,
 		@RequestParam("state") String state) {
 		// 1. 네이버 토큰 발급 URL 구성
-		String tokenUrl = "https://nid.naver.com/oauth2.0/token"
+		String tokenUrl = naverUri
 			+ "?grant_type=authorization_code"
 			+ "&client_id=" + naverClientId
 			+ "&client_secret=" + naverClientSecret
@@ -58,18 +67,22 @@ public class NaverAuthController {
 						.body("네이버 토큰 발급에 실패했습니다."));
 				}
 				String accessToken = (String) tokenData.get("access_token");
+
 				// 2. 네이버 프로필 조회
 				return webClient.get()
-					.uri("https://openapi.naver.com/v1/nid/me")
+					.uri(checkIdUri)
 					.header("Authorization", "Bearer " + accessToken)
 					.retrieve()
-					.bodyToMono(Map.class)
+					.bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
 					.flatMap(profileData -> {
-						Map<String, Object> response = (Map<String, Object>) profileData.get("response");
-						if (response == null) {
+						Object respObj = profileData.get("response");
+						if (!(respObj instanceof Map)) {
 							return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
 								.body("네이버 프로필 정보가 없습니다."));
 						}
+						@SuppressWarnings("unchecked")
+						Map<String, Object> response = (Map<String, Object>) respObj;
+
 						String naverId = (String) response.get("id");
 						String name = (String) response.get("name");
 						String email = (String) response.get("email");
@@ -114,7 +127,6 @@ public class NaverAuthController {
 	@GetMapping("/naver/current")
 	public ResponseEntity<?> getCurrentUser(HttpServletRequest request) {
 		String accessToken = null;
-
 		if (request.getCookies() != null) {
 			for (Cookie cookie : request.getCookies()) {
 				if ("access_token".equals(cookie.getName())) {
@@ -123,14 +135,13 @@ public class NaverAuthController {
 				}
 			}
 		}
-
 		if (accessToken == null) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
 				.body("로그인 정보가 없습니다.");
 		}
-
 		try {
 			String userLogin = jwtUtil.validateAndExtractUserLogin(accessToken);
+
 			User user = userService.getUserByLogin(userLogin);
 			Map<String, Object> result = new HashMap<>();
 			result.put("user", Map.of(

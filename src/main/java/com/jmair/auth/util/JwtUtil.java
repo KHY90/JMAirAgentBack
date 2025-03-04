@@ -28,7 +28,7 @@ public class JwtUtil {
 			.claim("role", user.getUserGrade().toString())
 			.setIssuedAt(new Date())
 			.setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_VALIDITY))
-			.signWith(SignatureAlgorithm.HS256, secretKey)
+			.signWith(Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8)), SignatureAlgorithm.HS256)
 			.compact();
 	}
 
@@ -37,16 +37,21 @@ public class JwtUtil {
 			.setSubject(user.getUserLogin())
 			.setIssuedAt(new Date())
 			.setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_VALIDITY))
-			.signWith(SignatureAlgorithm.HS256, secretKey)
+			.signWith(Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8)), SignatureAlgorithm.HS256)
 			.compact();
 	}
 
 	public String validateAndExtractUserLogin(String token) {
-		Claims claims = Jwts.parserBuilder()
-			.setSigningKey(Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8)))
-			.build()
-			.parseClaimsJws(token)
-			.getBody();
-		return claims.getSubject();
+		try {
+			Claims claims = Jwts.parserBuilder()
+				.setSigningKey(Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8)))
+				.build()
+				.parseClaimsJws(token)
+				.getBody();
+			return claims.getSubject();
+		} catch (Exception e) {
+			System.err.println("JWT 검증 실패: " + e.getMessage());
+			throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
+		}
 	}
 }

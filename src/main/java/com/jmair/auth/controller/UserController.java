@@ -94,6 +94,28 @@ public class UserController {
 		}
 	}
 
+	// 로그아웃
+	@PostMapping("/logout")
+	public ResponseEntity<?> logout(HttpServletResponse response) {
+		ResponseCookie accessCookie = ResponseCookie.from("access_token", "")
+			.httpOnly(true)
+			.secure(false) // 배포시 true
+			.path("/")
+			.maxAge(0)
+			.build();
+		ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", "")
+			.httpOnly(true)
+			.secure(false) // 배포시 true
+			.path("/")
+			.maxAge(0)
+			.build();
+
+		response.addHeader("Set-Cookie", accessCookie.toString());
+		response.addHeader("Set-Cookie", refreshCookie.toString());
+
+		return ResponseEntity.ok("로그아웃 성공");
+	}
+
 	// 회원탈퇴
 	@PutMapping("/delete")
 	public ResponseEntity<?> deleteUser(@RequestParam String userLogin) {
