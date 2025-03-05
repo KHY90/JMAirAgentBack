@@ -1,6 +1,9 @@
 package com.jmair.notice.controller;
 
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +17,7 @@ import jakarta.validation.Valid;
 public class NoticeController {
 
 	private final NoticeService noticeService;
+	private final Logger logger = LoggerFactory.getLogger(NoticeController.class);
 
 	@Autowired
 	public NoticeController(NoticeService noticeService) {
@@ -41,10 +45,12 @@ public class NoticeController {
 			List<NoticeDTO> notices = noticeService.getAllNotices();
 			return ResponseEntity.ok(notices);
 		} catch(Exception e) {
+			logger.error("공지사항 조회 중 오류", e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 				.body("공지사항 조회 중 오류가 발생했습니다.");
 		}
 	}
+
 
 	// 상세 조회
 	@GetMapping("/{noticeId}")

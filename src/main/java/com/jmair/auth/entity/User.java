@@ -1,5 +1,8 @@
 package com.jmair.auth.entity;
 
+import java.time.LocalDateTime;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.jmair.auth.dto.UserGrade;
 
 import jakarta.persistence.Column;
@@ -42,4 +45,7 @@ public class User {
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
 	private UserGrade userGrade;
+
+	private LocalDateTime joinDate;
+	private LocalDateTime deleteDate;
 }

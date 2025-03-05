@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.jmair.auth.dto.UserGrade;
 import com.jmair.auth.entity.User;
@@ -26,6 +27,7 @@ public class NoticeService {
 	}
 
 	// 등록
+	@Transactional
 	public NoticeDTO createNotice(NoticeDTO noticeDTO) {
 
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -92,6 +94,7 @@ public class NoticeService {
 	}
 
 	// 수정
+	@Transactional
 	public NoticeDTO editNotice(Integer noticeId, NoticeDTO noticeDTO) {
 		Notice notice = noticeRepository.findById(noticeId)
 			.orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
@@ -114,6 +117,7 @@ public class NoticeService {
 	}
 
 	// 삭제
+	@Transactional
 	public void deleteNotice(Integer noticeId) {
 		Notice notice = noticeRepository.findById(noticeId)
 			.orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));

@@ -1,5 +1,6 @@
 package com.jmair.auth.service;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -44,6 +45,7 @@ public class UserService {
 		user.setPhoneNumber(userDTO.getPhoneNumber());
 		user.setEmail(userDTO.getEmail());
 		user.setUserGrade(UserGrade.USER);
+		user.setJoinDate(LocalDateTime.now());
 		user.setStatus(true);
 
 		userRepository.save(user);
@@ -87,6 +89,7 @@ public class UserService {
 			user.setPassword(passwordEncoder.encode(dummyPassword));
 			user.setUserGrade(UserGrade.USER);
 			user.setStatus(true);
+			user.setJoinDate(LocalDateTime.now());
 			user = userRepository.save(user);
 		}
 
@@ -122,6 +125,7 @@ public class UserService {
 			user.setPassword(passwordEncoder.encode(dummyPassword));
 			user.setUserGrade(UserGrade.USER);
 			user.setStatus(true);
+			user.setJoinDate(LocalDateTime.now());
 			user = userRepository.save(user);
 		}
 
@@ -156,6 +160,7 @@ public class UserService {
 		}
 
 		user.setStatus(false);
+		user.setDeleteDate(LocalDateTime.now());
 		userRepository.save(user);
 	}
 

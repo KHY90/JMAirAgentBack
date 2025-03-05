@@ -2,6 +2,8 @@ package com.jmair.notice.dto;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,9 +25,13 @@ public class NoticeDTO {
 	@Size(max = 3000, message = "내용은 3000자 이내여야 합니다.")
 	private String content;
 	private String writer;
+
+	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS", timezone = "Asia/Seoul")
 	private LocalDateTime postTime;
+	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS", timezone = "Asia/Seoul")
 	private LocalDateTime noticeEditTime;
+	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS", timezone = "Asia/Seoul")
 	private LocalDateTime deleteTime;
-	// private int views;
+
 	private Boolean status;
 }
