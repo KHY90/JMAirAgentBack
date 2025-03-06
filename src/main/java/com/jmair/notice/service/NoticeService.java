@@ -89,9 +89,10 @@ public class NoticeService {
 		dto.setPostTime(notice.getNoticePostTime());
 		// dto.setViews(notice.getViews());
 		dto.setStatus(notice.isStatus());
-		dto.setNoticeEditTime(notice.getNoticeEditTime());
+		dto.setEditTime(notice.getNoticeEditTime());
 		return dto;
 	}
+
 
 	// 수정
 	@Transactional
@@ -112,7 +113,7 @@ public class NoticeService {
 		dto.setWriter(updated.getNoticeWriter());
 		// dto.setViews(updated.getViews());
 		dto.setStatus(updated.isStatus());
-		dto.setNoticeEditTime(LocalDateTime.now());
+		dto.setEditTime(LocalDateTime.now());
 		return dto;
 	}
 
