@@ -12,6 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.jmair.auth.dto.UserGrade;
 import com.jmair.auth.entity.User;
+import com.jmair.common.exeption.ForbiddenException;
+import com.jmair.common.exeption.ResourceNotFoundException;
+import com.jmair.common.exeption.UnauthorizedException;
 import com.jmair.notice.dto.NoticeDTO;
 import com.jmair.notice.entity.Notice;
 import com.jmair.notice.repository.NotiveRepository;
@@ -32,12 +35,12 @@ public class NoticeService {
 
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		if (authentication == null || !(authentication.getPrincipal() instanceof User currentUser)) {
-			throw new IllegalArgumentException("로그인한 사용자 정보가 없습니다.");
+			throw new UnauthorizedException("로그인한 사용자 정보가 없습니다.");
 		}
 
 		// 관리자 권한 확인
 		if (!(currentUser.getUserGrade() == UserGrade.ADMIN || currentUser.getUserGrade() == UserGrade.SUPERADMIN)) {
-			throw new IllegalArgumentException("공지사항 등록 권한이 없습니다.");
+			throw new ForbiddenException("공지사항 등록 권한이 없습니다.");
 		}
 
 		Notice notice = new Notice();
@@ -46,7 +49,6 @@ public class NoticeService {
 		notice.setNoticeWriter(currentUser.getUserName());
 		notice.setNoticePostTime(LocalDateTime.now());
 		notice.setStatus(true);
-		// notice.setViews(0);
 
 		Notice saved = noticeRepository.save(notice);
 
@@ -56,9 +58,7 @@ public class NoticeService {
 		result.setContent(saved.getNoticeContent());
 		result.setWriter(saved.getNoticeWriter());
 		result.setPostTime(saved.getNoticePostTime());
-		// result.setViews(saved.getViews());
 		result.setStatus(saved.isStatus());
-		result.setDeleteTime(saved.getNoticeDeleteTime());
 		return result;
 	}
 
@@ -72,7 +72,6 @@ public class NoticeService {
 			dto.setContent(notice.getNoticeContent());
 			dto.setWriter(notice.getNoticeWriter());
 			dto.setPostTime(notice.getNoticePostTime());
-			// dto.setViews(notice.getViews());
 			return dto;
 		}).collect(Collectors.toList());
 	}
@@ -87,23 +86,33 @@ public class NoticeService {
 		dto.setContent(notice.getNoticeContent());
 		dto.setWriter(notice.getNoticeWriter());
 		dto.setPostTime(notice.getNoticePostTime());
-		// dto.setViews(notice.getViews());
 		dto.setStatus(notice.isStatus());
 		dto.setEditTime(notice.getNoticeEditTime());
 		return dto;
 	}
 
-
 	// 수정
 	@Transactional
 	public NoticeDTO editNotice(Integer noticeId, NoticeDTO noticeDTO) {
 		Notice notice = noticeRepository.findById(noticeId)
-			.orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
+			.orElseThrow(() -> new ResourceNotFoundException("공지사항을 찾을 수 없습니다."));
+
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if (authentication == null || !(authentication.getPrincipal() instanceof User currentUser)) {
+			throw new UnauthorizedException("로그인한 사용자 정보가 없습니다.");
+		}
+		if (!(currentUser.getUserGrade() == UserGrade.ADMIN || currentUser.getUserGrade() == UserGrade.SUPERADMIN)) {
+			throw new ForbiddenException("공지사항 수정 권한이 없습니다.");
+		}
 
 		notice.setNoticeTitle(noticeDTO.getTitle());
 		notice.setNoticeContent(noticeDTO.getContent());
+		notice.setNoticeEditTime(LocalDateTime.now());
 
-		notice.setStatus(noticeDTO.getStatus());
+		if (noticeDTO.getStatus() != null) {
+			notice.setStatus(noticeDTO.getStatus());
+		}
+
 		Notice updated = noticeRepository.save(notice);
 
 		NoticeDTO dto = new NoticeDTO();
@@ -111,9 +120,8 @@ public class NoticeService {
 		dto.setTitle(updated.getNoticeTitle());
 		dto.setContent(updated.getNoticeContent());
 		dto.setWriter(updated.getNoticeWriter());
-		// dto.setViews(updated.getViews());
 		dto.setStatus(updated.isStatus());
-		dto.setEditTime(LocalDateTime.now());
+		dto.setEditTime(updated.getNoticeEditTime());
 		return dto;
 	}
 
@@ -121,7 +129,7 @@ public class NoticeService {
 	@Transactional
 	public void deleteNotice(Integer noticeId) {
 		Notice notice = noticeRepository.findById(noticeId)
-			.orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
+			.orElseThrow(() -> new ResourceNotFoundException("공지사항을 찾을 수 없습니다."));
 		notice.setStatus(false);
 		notice.setNoticeDeleteTime(LocalDateTime.now());
 		noticeRepository.save(notice);

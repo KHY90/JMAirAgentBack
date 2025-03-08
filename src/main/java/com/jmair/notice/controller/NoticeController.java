@@ -8,6 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import com.jmair.common.exeption.ForbiddenException;
+import com.jmair.common.exeption.ResourceNotFoundException;
+import com.jmair.common.exeption.UnauthorizedException;
 import com.jmair.notice.dto.NoticeDTO;
 import com.jmair.notice.service.NoticeService;
 import jakarta.validation.Valid;
@@ -73,15 +77,16 @@ public class NoticeController {
 		try {
 			NoticeDTO updatedNotice = noticeService.editNotice(noticeId, noticeDTO);
 			return ResponseEntity.ok(updatedNotice);
-		} catch (IllegalArgumentException e) {
+		} catch (ResourceNotFoundException | UnauthorizedException | ForbiddenException e) {
 			return ResponseEntity.badRequest().body(e.getMessage());
 		} catch(Exception e) {
+			logger.error("공지사항 수정 중 오류", e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 				.body("공지사항 수정 중 오류가 발생했습니다.");
 		}
 	}
 
-	// 삭제 (소프트 삭제)
+	// 삭제
 	@DeleteMapping("/{noticeId}/delete")
 	public ResponseEntity<?> deleteNotice(@PathVariable Integer noticeId) {
 		try {

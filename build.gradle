@@ -50,6 +50,9 @@ dependencies {
     // Lombok (컴파일 전용)
     compileOnly 'org.projectlombok:lombok'
 
+//    // MyBatis
+//    implementation 'org.mybatis.spring.boot:spring-boot-starter-mybatis:2.2.2'
+
     // MySQL JDBC 드라이버 (런타임 전용)
     runtimeOnly 'com.mysql:mysql-connector-j'
 
