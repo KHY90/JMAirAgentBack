@@ -60,6 +60,8 @@ public class CorsAndSecurityConfig {
 				UsernamePasswordAuthenticationFilter.class)
 			.authorizeHttpRequests(authz -> authz
 				.requestMatchers(HttpMethod.GET, "/api/v1/notices/**").permitAll()
+				.requestMatchers(HttpMethod.GET, "/api/v1/install/**").permitAll()
+				.requestMatchers(HttpMethod.POST, "/api/v1/install/**").permitAll()
 				// 인증 관련 URL은 모두 허용
 				.requestMatchers("/api/v1/auth/**").permitAll()
 				.anyRequest().authenticated()
