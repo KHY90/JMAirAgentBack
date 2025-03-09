@@ -2,6 +2,7 @@ package com.jmair.auth.controller;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -19,8 +20,11 @@ import java.util.Map;
 
 import com.jmair.auth.dto.SocialDTO;
 import com.jmair.auth.entity.User;
+import com.jmair.auth.service.TokenService;
 import com.jmair.auth.service.UserService;
 import com.jmair.auth.util.JwtUtil;
+import com.jmair.common.exeption.TokenExpiredException;
+import com.jmair.common.exeption.TokenInvalidException;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -28,6 +32,7 @@ import com.jmair.auth.util.JwtUtil;
 public class NaverAuthController {
 
 	private final UserService userService;
+	private final TokenService tokenService;
 	private final WebClient webClient;
 	private final JwtUtil jwtUtil;
 
@@ -142,33 +147,66 @@ public class NaverAuthController {
 	}
 
 	@GetMapping("/current")
-	public ResponseEntity<?> getCurrentUser(HttpServletRequest request) {
+	public ResponseEntity<?> getCurrentUser(HttpServletRequest request, HttpServletResponse response) {
 		String accessToken = null;
+		String refreshToken = null;
 		if (request.getCookies() != null) {
 			for (Cookie cookie : request.getCookies()) {
 				if ("access_token".equals(cookie.getName())) {
 					accessToken = cookie.getValue();
-					break;
+				} else if ("refresh_token".equals(cookie.getName())) {
+					refreshToken = cookie.getValue();
 				}
 			}
 		}
 		if (accessToken == null) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-				.body("로그인 정보가 없습니다.");
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 정보가 없습니다.");
 		}
 		try {
-			String userLogin = jwtUtil.validateAndExtractUserLogin(accessToken);
-
-			User user = userService.getUserByLogin(userLogin);
+			// 액세스 토큰 검증 및 사용자 조회
+			User user = tokenService.validateTokenAndGetUser(accessToken);
 			Map<String, Object> result = new HashMap<>();
-			result.put("user", Map.of(
-				"userLogin", user.getUserLogin(),
-				"userName", user.getUserName()
-			));
+			result.put("user", Map.of("userLogin", user.getUserLogin(), "userName", user.getUserName()));
 			return ResponseEntity.ok(result);
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-				.body("유효하지 않은 토큰입니다.");
+		} catch (TokenExpiredException e) {
+			// 액세스 토큰 만료 시 리프레시 토큰 검증
+			if (refreshToken == null) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 정보가 없습니다.");
+			}
+			try {
+				// 리프레시 토큰으로 사용자 정보 추출
+				String userLogin = jwtUtil.validateAndExtractUserLogin(refreshToken);
+				User user = userService.getUserByLogin(userLogin);
+				// 새 토큰 발급
+				Map<String, String> newTokens = tokenService.refreshToken(user);
+				String newAccessToken = newTokens.get("accessToken");
+				String newRefreshToken = newTokens.get("refreshToken");
+
+				// 새 토큰을 쿠키에 설정
+				ResponseCookie newAccessCookie = ResponseCookie.from("access_token", newAccessToken)
+					.httpOnly(true)
+					.secure(false) // 배포시 true로 변경
+					.path("/")
+					.maxAge(15 * 60)
+					.build();
+				ResponseCookie newRefreshCookie = ResponseCookie.from("refresh_token", newRefreshToken)
+					.httpOnly(true)
+					.secure(false) // 배포시 true로 변경
+					.path("/")
+					.maxAge(7 * 24 * 60 * 60)
+					.build();
+				response.addHeader("Set-Cookie", newAccessCookie.toString());
+				response.addHeader("Set-Cookie", newRefreshCookie.toString());
+
+				Map<String, Object> result = new HashMap<>();
+				result.put("user", Map.of("userLogin", user.getUserLogin(), "userName", user.getUserName()));
+				return ResponseEntity.ok(result);
+			} catch (Exception ex) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유효하지 않은 토큰입니다.");
+			}
+		} catch (TokenInvalidException e) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유효하지 않은 토큰입니다.");
 		}
 	}
+
 }

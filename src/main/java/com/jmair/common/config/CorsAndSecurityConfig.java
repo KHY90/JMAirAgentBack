@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -58,6 +59,7 @@ public class CorsAndSecurityConfig {
 			.addFilterBefore(new JwtAuthenticationFilter(jwtUtil, userService),
 				UsernamePasswordAuthenticationFilter.class)
 			.authorizeHttpRequests(authz -> authz
+				.requestMatchers(HttpMethod.GET, "/api/v1/notices/**").permitAll()
 				// 인증 관련 URL은 모두 허용
 				.requestMatchers("/api/v1/auth/**").permitAll()
 				.anyRequest().authenticated()
