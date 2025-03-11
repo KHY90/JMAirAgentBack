@@ -77,14 +77,47 @@ public class InstallService {
 			.reservationFirstDate(saved.getReservationFirstDate())
 			.reservationSecondDate(saved.getReservationSecondDate())
 			.installStatus(saved.getInstallStatus())
-			// DTO에도 등록자 등급을 세팅
 			.registeredUserGrade(saved.getRegisteredUserGrade())
 			.build();
 	}
 
 	// 전체 조회
-	public List<InstallDTO> getAllInstallRequests() {
-		return installRepository.findAll().stream()
+	public List<InstallDTO> getAllInstallRequests(Optional<User> currentUser, String installName, String installPhone) {
+		List<InstallRequest> all = installRepository.findAll().stream()
+			.filter(req -> req.getInstallStatus() != Install.FALLSE)
+			.toList();
+
+		// 관리자 등급이면 전체 조회
+		if (currentUser.isPresent()) {
+			User user = currentUser.get();
+			if (user.getUserGrade() == UserGrade.ENGINEER ||
+				user.getUserGrade() == UserGrade.ADMIN ||
+				user.getUserGrade() == UserGrade.SUPERADMIN ||
+				user.getUserGrade() == UserGrade.ADMINWATCHER) {
+				return all.stream()
+					.map(req -> InstallDTO.builder()
+						.installId(req.getInstallId())
+						.installName(req.getInstallName())
+						.installAddress(req.getInstallAddress())
+						.installPhone(req.getInstallPhone())
+						.installNumber(req.getInstallNumber())
+						.installEmail(req.getInstallEmail())
+						.installDescription(req.getInstallDescription())
+						.requestDate(req.getRequestDate())
+						.reservationFirstDate(req.getReservationFirstDate())
+						.reservationSecondDate(req.getReservationSecondDate())
+						.installStatus(req.getInstallStatus())
+						.registeredUserGrade(req.getRegisteredUserGrade())
+						.build())
+					.collect(Collectors.toList());
+			}
+		}
+		// 일반 사용자 또는 비로그인 사용자는 이름과 핸드폰 번호 필수
+		if (installName == null || installName.isBlank() || installPhone == null || installPhone.isBlank()) {
+			throw new IllegalArgumentException("일반 사용자는 설치 신청 조회 시 이름과 핸드폰 번호를 제공해야 합니다.");
+		}
+		return all.stream()
+			.filter(req -> req.getInstallName().equals(installName) && req.getInstallPhone().equals(installPhone))
 			.map(req -> InstallDTO.builder()
 				.installId(req.getInstallId())
 				.installName(req.getInstallName())
@@ -97,6 +130,7 @@ public class InstallService {
 				.reservationFirstDate(req.getReservationFirstDate())
 				.reservationSecondDate(req.getReservationSecondDate())
 				.installStatus(req.getInstallStatus())
+				.registeredUserGrade(req.getRegisteredUserGrade())
 				.build())
 			.collect(Collectors.toList());
 	}
@@ -145,7 +179,50 @@ public class InstallService {
 			.build();
 	}
 
-	// 수정 - 관리자(ENGINEER, ADMIN, SUPERADMIN)만 수정 가능. 수정 가능한 필드는 설치 상태와 비고(installNote)만
+	// 유저 수정
+	@Transactional
+	public InstallDTO editInstallRequestByUser(Integer installId, InstallDTO installDTO, String providedPassword) {
+
+		InstallRequest request = installRepository.findById(installId)
+			.orElseThrow(() -> new ResourceNotFoundException("설치 신청을 찾을 수 없습니다."));
+
+		if (providedPassword == null || !passwordEncoder.matches(providedPassword, request.getInstallPassword())) {
+			throw new UnauthorizedException("비밀번호가 일치하지 않습니다.");
+		}
+
+		InstallRequest updatedRequest = request.toBuilder()
+			.installName(installDTO.getInstallName())
+			.installAddress(installDTO.getInstallAddress())
+			.installPhone(installDTO.getInstallPhone())
+			.installNumber(installDTO.getInstallNumber())
+			.installEmail(installDTO.getInstallEmail())
+			.installPassword(passwordEncoder.encode(installDTO.getInstallPassword()))
+			.installDescription(installDTO.getInstallDescription())
+			.reservationFirstDate(installDTO.getReservationFirstDate())
+			.reservationSecondDate(installDTO.getReservationSecondDate())
+			.editTime(LocalDateTime.now())
+			.build();
+
+		InstallRequest saved = installRepository.save(updatedRequest);
+
+		return InstallDTO.builder()
+			.installId(saved.getInstallId())
+			.installName(saved.getInstallName())
+			.installAddress(saved.getInstallAddress())
+			.installPhone(saved.getInstallPhone())
+			.installNumber(saved.getInstallNumber())
+			.installEmail(saved.getInstallEmail())
+			.installPassword(saved.getInstallPassword())
+			.installDescription(saved.getInstallDescription())
+			.requestDate(saved.getRequestDate())
+			.reservationFirstDate(saved.getReservationFirstDate())
+			.reservationSecondDate(saved.getReservationSecondDate())
+			.installStatus(saved.getInstallStatus())
+			.registeredUserGrade(saved.getRegisteredUserGrade())
+			.build();
+	}
+
+	// 관리자용 수정 - 수정 가능한 필드는 설치 상태와 비고(installNote)만
 	@Transactional
 	public InstallDTO editInstallRequest(Integer installId, InstallDTO installDTO) {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -184,7 +261,7 @@ public class InstallService {
 			.build();
 	}
 
-	// 삭제 - 관리자(ENGINEER, ADMIN, SUPERADMIN)만 삭제 가능 (소프트 삭제: 상태를 CANCEL로 변경)
+	// 삭제 - 관리자(ENGINEER, ADMIN, SUPERADMIN)만 삭제 가능
 	@Transactional
 	public void deleteInstallRequest(Integer installId) {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -199,7 +276,7 @@ public class InstallService {
 
 		InstallRequest request = installRepository.findById(installId)
 			.orElseThrow(() -> new ResourceNotFoundException("설치 신청을 찾을 수 없습니다."));
-		request.setInstallStatus(Install.CANCEL);
+		request.setInstallStatus(Install.FALLSE);
 		installRepository.save(request);
 	}
 }

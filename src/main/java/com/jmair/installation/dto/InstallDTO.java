@@ -50,6 +50,5 @@ public class InstallDTO {
 	// 관리자용 비고
 	@Size(max = 1000, message = "비고는 최대 1000자까지 입력 가능합니다.")
 	private String installNote;
-
 	private UserGrade registeredUserGrade;
 }

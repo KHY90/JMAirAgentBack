@@ -1,5 +1,6 @@
 package com.jmair.installation.controller;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -53,10 +54,23 @@ public class InstallController {
 
 	// 전체 조회
 	@GetMapping
-	public ResponseEntity<?> getAllInstallRequests() {
+	public ResponseEntity<?> getAllInstallRequests(
+		@RequestParam(value = "installName", required = false) String installName,
+		@RequestParam(value = "installPhone", required = false) String installPhone,
+		HttpServletRequest request) {
 		try {
-			return ResponseEntity.ok(installService.getAllInstallRequests());
-		} catch (Exception e) {
+			// 현재 로그인한 사용자가 있다면 가져오기 (없으면 empty)
+			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+			Optional<User> currentUser = Optional.empty();
+			if (auth != null && auth.getPrincipal() instanceof User) {
+				currentUser = Optional.of((User) auth.getPrincipal());
+			}
+			List<InstallDTO> requests = installService.getAllInstallRequests(currentUser, installName, installPhone);
+			return ResponseEntity.ok(requests);
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		} catch(Exception e) {
+			logger.error("에어컨 설치 신청 조회 중 오류", e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 				.body("에어컨 설치 신청 조회 중 오류가 발생했습니다.");
 		}
@@ -87,12 +101,32 @@ public class InstallController {
 		}
 	}
 
-	// 수정
+	// 관리자 전용 수정
 	@PutMapping("/{installId}/edit")
 	public ResponseEntity<?> editInstallRequest(@PathVariable Integer installId,
 		@Valid @RequestBody InstallDTO dto) {
 		try {
 			InstallDTO updated = installService.editInstallRequest(installId, dto);
+			return ResponseEntity.ok(updated);
+		} catch (UnauthorizedException | ForbiddenException e) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+		} catch (ResourceNotFoundException e) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+		} catch (Exception e) {
+			logger.error("설치 신청 수정 중 오류", e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body("설치 신청 수정 중 오류가 발생했습니다.");
+		}
+	}
+
+	// 유저 수정
+	@PutMapping("/{installId}/user/edit")
+	public ResponseEntity<?> editInstallRequestByUser(
+		@PathVariable Integer installId,
+		@Valid @RequestBody InstallDTO dto,
+		@RequestParam("password") String providedPassword) {
+		try {
+			InstallDTO updated = installService.editInstallRequestByUser(installId, dto, providedPassword);
 			return ResponseEntity.ok(updated);
 		} catch (UnauthorizedException | ForbiddenException e) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
