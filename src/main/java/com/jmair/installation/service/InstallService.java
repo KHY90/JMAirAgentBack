@@ -33,23 +33,33 @@ public class InstallService {
 	// 설치 신청 등록
 	@Transactional
 	public InstallDTO createInstallRequest(InstallDTO installDTO) {
+		// 현재 인증된 사용자를 확인 (로그인한 사용자가 있다면)
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		UserGrade registerGrade;
+		if (authentication != null && authentication.getPrincipal() instanceof User currentUser) {
+			registerGrade = currentUser.getUserGrade();
+		} else {
+			// 비로그인 상태이면 NOUSER 처리
+			registerGrade = UserGrade.NOUSER;
+		}
+
 		InstallRequest request = InstallRequest.builder()
 			.installName(installDTO.getInstallName())
 			.installAddress(installDTO.getInstallAddress())
 			.installPhone(installDTO.getInstallPhone())
 			.installNumber(installDTO.getInstallNumber())
 			.installEmail(installDTO.getInstallEmail())
-			// 비밀번호 암호화
+			// 비밀번호 암호화 적용
 			.installPassword(passwordEncoder.encode(installDTO.getInstallPassword()))
 			.installDescription(installDTO.getInstallDescription())
-			// 신청한 날짜
+			// 신청한 날짜는 현재 시간으로 설정
 			.requestDate(LocalDateTime.now())
-			// 희망 날짜(1순위)
 			.reservationFirstDate(installDTO.getReservationFirstDate())
-			// 희망 날짜(2순위)
 			.reservationSecondDate(installDTO.getReservationSecondDate())
 			// 최초 상태는 REQUEST로 설정
 			.installStatus(Install.REQUEST)
+			// 등록자의 UserGrade 저장 (로그인했으면 해당 등급, 아니면 NOUSER)
+			.registeredUserGrade(registerGrade)
 			.build();
 
 		InstallRequest saved = installRepository.save(request);
@@ -67,6 +77,8 @@ public class InstallService {
 			.reservationFirstDate(saved.getReservationFirstDate())
 			.reservationSecondDate(saved.getReservationSecondDate())
 			.installStatus(saved.getInstallStatus())
+			// DTO에도 등록자 등급을 세팅
+			.registeredUserGrade(saved.getRegisteredUserGrade())
 			.build();
 	}
 

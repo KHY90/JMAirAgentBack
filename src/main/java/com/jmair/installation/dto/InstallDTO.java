@@ -3,6 +3,7 @@ package com.jmair.installation.dto;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.jmair.auth.dto.UserGrade;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -37,10 +38,10 @@ public class InstallDTO {
 	@Size(max = 1000, message = "요청사항은 최대 1000자까지 입력 가능합니다.")
 	private String installDescription;
 	// 예약 신청 날짜
-	@JsonFormat(pattern = "yyyy-MM-dd", timezone = "Asia/Seoul")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
 	private LocalDateTime requestDate;
 	// 예약 수정 날짜
-	@JsonFormat(pattern = "yyyy-MM-dd", timezone = "Asia/Seoul")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
 	private LocalDateTime editTime;
 	// 예약 희망 날짜
 	private String reservationFirstDate;
@@ -49,4 +50,6 @@ public class InstallDTO {
 	// 관리자용 비고
 	@Size(max = 1000, message = "비고는 최대 1000자까지 입력 가능합니다.")
 	private String installNote;
+
+	private UserGrade registeredUserGrade;
 }

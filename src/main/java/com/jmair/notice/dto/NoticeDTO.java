@@ -25,13 +25,11 @@ public class NoticeDTO {
 	@Size(max = 3000, message = "내용은 3000자 이내여야 합니다.")
 	private String content;
 	private String writer;
-
 	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
 	private LocalDateTime postTime;
 	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
 	private LocalDateTime editTime;
 	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
 	private LocalDateTime deleteTime;
-
 	private Boolean status;
 }
