@@ -12,13 +12,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.jmair.as.dto.ASDTO;
+import com.jmair.as.dto.ASStatus;
 import com.jmair.as.entity.ASEntity;
 import com.jmair.as.repository.ASRepository;
 import com.jmair.auth.dto.UserGrade;
 import com.jmair.auth.entity.User;
 import com.jmair.auth.service.UserService;
-import com.jmair.cleaning.dto.CleanStatus;
-import com.jmair.cleaning.dto.CleaningDTO;
 import com.jmair.common.exeption.ForbiddenException;
 import com.jmair.common.exeption.ResourceNotFoundException;
 import com.jmair.common.exeption.UnauthorizedException;
@@ -36,7 +35,7 @@ public class ASService {
 	// 등록
 	@Transactional
 	public ASDTO createASRequest(ASDTO dto) {
-
+		// 현재 인증된 사용자가 있다면 해당 유저의 UserGrade를, 없으면 NOUSER로 처리
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		UserGrade registerGrade;
 		if (auth != null && auth.getPrincipal() instanceof User currentUser) {
@@ -46,42 +45,43 @@ public class ASService {
 		}
 
 		ASEntity request = ASEntity.builder()
-			.cleanName(dto.getCleanName())
-			.cleanNumber(dto.getCleanNumber())
-			.cleanEmail(dto.getCleanEmail())
+			.asName(dto.getAsName())
+			.asNumber(dto.getAsNumber())
+			.asEmail(dto.getAsEmail())
 			.productType(dto.getProductType())
-			.cleanDescription(dto.getCleanDescription())
-			.cleanAdress(dto.getCleanAdress())
-			.cleanDetailAdress(dto.getCleanDetailAdress())
-			.cleanPassword(passwordEncoder.encode(dto.getCleanPassword()))
-			.cleanStatus(CleanStatus.REQUEST)
-			.cleanFirstReservationTime(dto.getCleanFirstReservationTime())
-			.cleanSecondReservationTime(dto.getCleanSecondReservationTime())
+			.asDescription(dto.getAsDescription())
+			.asAdress(dto.getAsAdress())
+			.asDetailAdress(dto.getAsDetailAdress())
+			// 비밀번호는 암호화해서 저장
+			.asPassword(passwordEncoder.encode(dto.getAsPassword()))
+			.asStatus(ASStatus.REQUEST)
+			.asFirstReservationTime(dto.getAsFirstReservationTime())
+			.asSecondReservationTime(dto.getAsSecondReservationTime())
 			.registeredUserGrade(registerGrade)
 			.build();
 
 		ASEntity saved = asRepository.save(request);
 
-		return CleaningDTO.builder()
-			.cleanId(saved.getCleanId())
-			.cleanName(saved.getCleanName())
-			.cleanNumber(saved.getCleanNumber())
-			.cleanEmail(saved.getCleanEmail())
+		return ASDTO.builder()
+			.asId(saved.getAsId())
+			.asName(saved.getAsName())
+			.asNumber(saved.getAsNumber())
+			.asEmail(saved.getAsEmail())
 			.productType(saved.getProductType())
-			.cleanDescription(saved.getCleanDescription())
-			.cleanAdress(saved.getCleanAdress())
-			.cleanDetailAdress(saved.getCleanDetailAdress())
-			.cleanStartTime(saved.getCleanStartTime())
-			.cleanFirstReservationTime(saved.getCleanFirstReservationTime())
-			.cleanSecondReservationTime(saved.getCleanSecondReservationTime())
-			.cleanStatus(saved.getCleanStatus())
+			.asDescription(saved.getAsDescription())
+			.asAdress(saved.getAsAdress())
+			.asDetailAdress(saved.getAsDetailAdress())
+			.asStartTime(saved.getAsStartTime())
+			.asFirstReservationTime(saved.getAsFirstReservationTime())
+			.asSecondReservationTime(saved.getAsSecondReservationTime())
+			.asStatus(saved.getAsStatus())
 			.registeredUserGrade(saved.getRegisteredUserGrade())
 			.build();
 	}
 
 	// 전체 조회
 	@Transactional(readOnly = true)
-	public List<CleaningDTO> getAllASRequests(Optional<User> currentUser, String asName, String asNumber) {
+	public List<ASDTO> getAllASRequests(Optional<User> currentUser, String asName, String asNumber) {
 		List<ASEntity> all = asRepository.findAll();
 		// 관리자
 		if (currentUser.isPresent()) {
@@ -91,20 +91,20 @@ public class ASService {
 				user.getUserGrade() == UserGrade.SUPERADMIN ||
 				user.getUserGrade() == UserGrade.ADMINWATCHER) {
 				return all.stream()
-					.filter(entity -> entity.getCleanStatus() != CleanStatus.FALLSE)
-					.map(entity -> CleaningDTO.builder()
-						.cleanId(entity.getCleanId())
-						.cleanName(entity.getCleanName())
-						.cleanNumber(entity.getCleanNumber())
-						.cleanEmail(entity.getCleanEmail())
+					.filter(entity -> entity.getAsStatus() != ASStatus.FALLSE)
+					.map(entity -> ASDTO.builder()
+						.asId(entity.getAsId())
+						.asName(entity.getAsName())
+						.asNumber(entity.getAsNumber())
+						.asEmail(entity.getAsEmail())
 						.productType(entity.getProductType())
-						.cleanDescription(entity.getCleanDescription())
-						.cleanAdress(entity.getCleanAdress())
-						.cleanDetailAdress(entity.getCleanDetailAdress())
-						.cleanStartTime(entity.getCleanStartTime())
-						.cleanFirstReservationTime(entity.getCleanFirstReservationTime())
-						.cleanSecondReservationTime(entity.getCleanSecondReservationTime())
-						.cleanStatus(entity.getCleanStatus())
+						.asDescription(entity.getAsDescription())
+						.asAdress(entity.getAsAdress())
+						.asDetailAdress(entity.getAsDetailAdress())
+						.asStartTime(entity.getAsStartTime())
+						.asFirstReservationTime(entity.getAsFirstReservationTime())
+						.asSecondReservationTime(entity.getAsSecondReservationTime())
+						.asStatus(entity.getAsStatus())
 						.registeredUserGrade(entity.getRegisteredUserGrade())
 						.build())
 					.collect(Collectors.toList());
@@ -115,21 +115,21 @@ public class ASService {
 			throw new IllegalArgumentException("일반 사용자는 이름과 핸드폰 번호를 제공해야 합니다.");
 		}
 		return all.stream()
-			.filter(entity -> entity.getASStatus() != CleanStatus.FALLSE)
-			.filter(entity -> entity.getCleanName().equals(cleanName) && entity.getCleanNumber().equals(cleanNumber))
-			.map(entity -> CleaningDTO.builder()
-				.cleanId(entity.getCleanId())
-				.cleanName(entity.getCleanName())
-				.cleanNumber(entity.getCleanNumber())
-				.cleanEmail(entity.getCleanEmail())
+			.filter(entity -> entity.getAsStatus() != ASStatus.FALLSE)
+			.filter(entity -> entity.getAsName().equals(asName) && entity.getAsNumber().equals(asNumber))
+			.map(entity -> ASDTO.builder()
+				.asId(entity.getAsId())
+				.asName(entity.getAsName())
+				.asNumber(entity.getAsNumber())
+				.asEmail(entity.getAsEmail())
 				.productType(entity.getProductType())
-				.cleanDescription(entity.getCleanDescription())
-				.cleanAdress(entity.getCleanAdress())
-				.cleanDetailAdress(entity.getCleanDetailAdress())
-				.cleanStartTime(entity.getCleanStartTime())
-				.cleanFirstReservationTime(entity.getCleanFirstReservationTime())
-				.cleanSecondReservationTime(entity.getCleanSecondReservationTime())
-				.cleanStatus(entity.getCleanStatus())
+				.asDescription(entity.getAsDescription())
+				.asAdress(entity.getAsAdress())
+				.asDetailAdress(entity.getAsDetailAdress())
+				.asStartTime(entity.getAsStartTime())
+				.asFirstReservationTime(entity.getAsFirstReservationTime())
+				.asSecondReservationTime(entity.getAsSecondReservationTime())
+				.asStatus(entity.getAsStatus())
 				.registeredUserGrade(entity.getRegisteredUserGrade())
 				.build())
 			.collect(Collectors.toList());
@@ -141,7 +141,7 @@ public class ASService {
 		ASEntity entity = asRepository.findById(asId)
 			.orElseThrow(() -> new ResourceNotFoundException("세척 신청을 찾을 수 없습니다."));
 
-		if (entity.getASStatus() == CleanStatus.FALLSE) {
+		if (entity.getAsStatus() == ASStatus.FALLSE) {
 			throw new ResourceNotFoundException("해당 세척 신청은 삭제되었습니다.");
 		}
 
@@ -150,25 +150,25 @@ public class ASService {
 			currentUser.get().getUserGrade() == UserGrade.ADMIN ||
 			currentUser.get().getUserGrade() == UserGrade.SUPERADMIN ||
 			currentUser.get().getUserGrade() == UserGrade.ADMINWATCHER)) {
-			if (providedPassword == null || !passwordEncoder.matches(providedPassword, entity.getCleanPassword())) {
+			if (providedPassword == null || !passwordEncoder.matches(providedPassword, entity.getAsPassword())) {
 				throw new UnauthorizedException("비밀번호가 일치하지 않거나 비밀번호가 필요합니다.");
 			}
 		}
 
-		return CleaningDTO.builder()
-			.cleanId(entity.getCleanId())
-			.cleanName(entity.getCleanName())
-			.cleanNumber(entity.getCleanNumber())
-			.cleanEmail(entity.getCleanEmail())
+		return ASDTO.builder()
+			.asId(entity.getAsId())
+			.asName(entity.getAsName())
+			.asNumber(entity.getAsNumber())
+			.asEmail(entity.getAsEmail())
 			.productType(entity.getProductType())
-			.cleanDescription(entity.getCleanDescription())
-			.cleanAdress(entity.getCleanAdress())
-			.cleanDetailAdress(entity.getCleanDetailAdress())
-			.cleanStartTime(entity.getCleanStartTime())
-			.cleanEditTime(entity.getCleanEditTime())
-			.cleanFirstReservationTime(entity.getCleanFirstReservationTime())
-			.cleanSecondReservationTime(entity.getCleanSecondReservationTime())
-			.cleanStatus(entity.getCleanStatus())
+			.asDescription(entity.getAsDescription())
+			.asAdress(entity.getAsAdress())
+			.asDetailAdress(entity.getAsDetailAdress())
+			.asStartTime(entity.getAsStartTime())
+			.asEditTime(entity.getAsEditTime())
+			.asFirstReservationTime(entity.getAsFirstReservationTime())
+			.asSecondReservationTime(entity.getAsSecondReservationTime())
+			.asStatus(entity.getAsStatus())
 			.registeredUserGrade(entity.getRegisteredUserGrade())
 			.build();
 	}
@@ -179,53 +179,53 @@ public class ASService {
 		ASEntity entity = asRepository.findById(asId)
 			.orElseThrow(() -> new ResourceNotFoundException("세척 신청을 찾을 수 없습니다."));
 
-		if (entity.getASStatus() == CleanStatus.FALLSE) {
+		if (entity.getAsStatus() == ASStatus.FALLSE) {
 			throw new ResourceNotFoundException("해당 세척 신청은 삭제되었습니다.");
 		}
 
 		// 비밀번호 검증 (비로그인 혹은 일반 사용자의 경우)
-		if (providedPassword == null || !passwordEncoder.matches(providedPassword, entity.getCleanPassword())) {
+		if (providedPassword == null || !passwordEncoder.matches(providedPassword, entity.getAsPassword())) {
 			throw new UnauthorizedException("비밀번호가 일치하지 않습니다.");
 		}
 
 		// 일반 사용자가 수정 가능한 모든 필드 업데이트
-		entity.setCleanName(dto.getCleanName());
-		entity.setCleanNumber(dto.getCleanNumber());
-		entity.setCleanEmail(dto.getCleanEmail());
+		entity.setAsName(dto.getAsName());
+		entity.setAsNumber(dto.getAsNumber());
+		entity.setAsEmail(dto.getAsEmail());
 		entity.setProductType(dto.getProductType());
-		entity.setCleanDescription(dto.getCleanDescription());
-		entity.setCleanAdress(dto.getCleanAdress());
-		entity.setCleanDetailAdress(dto.getCleanDetailAdress());
-		entity.setCleanStartTime(dto.getCleanStartTime());
-		entity.setCleanFirstReservationTime(dto.getCleanFirstReservationTime());
-		entity.setCleanSecondReservationTime(dto.getCleanSecondReservationTime());
-		entity.setCleanNote(dto.getCleanNote());
-		entity.setCleanStatus(dto.getCleanStatus());
+		entity.setAsDescription(dto.getAsDescription());
+		entity.setAsAdress(dto.getAsAdress());
+		entity.setAsDetailAdress(dto.getAsDetailAdress());
+		entity.setAsStartTime(dto.getAsStartTime());
+		entity.setAsFirstReservationTime(dto.getAsFirstReservationTime());
+		entity.setAsSecondReservationTime(dto.getAsSecondReservationTime());
+		entity.setAsNote(dto.getAsNote());
+		entity.setAsStatus(dto.getAsStatus());
 
 		// 수정 시 수정 시간 업데이트
-		entity.setASEditTime(LocalDateTime.now());
+		entity.setAsEditTime(LocalDateTime.now());
 
 		ASEntity updated = asRepository.save(entity);
 
-		return CleaningDTO.builder()
-			.cleanId(updated.getCleanId())
-			.cleanName(updated.getCleanName())
-			.cleanNumber(updated.getCleanNumber())
-			.cleanEmail(updated.getCleanEmail())
+		return ASDTO.builder()
+			.asId(updated.getAsId())
+			.asName(updated.getAsName())
+			.asNumber(updated.getAsNumber())
+			.asEmail(updated.getAsEmail())
 			.productType(updated.getProductType())
-			.cleanDescription(updated.getCleanDescription())
-			.cleanAdress(updated.getCleanAdress())
-			.cleanDetailAdress(updated.getCleanDetailAdress())
-			.cleanEditTime(updated.getCleanEditTime())
-			.cleanFirstReservationTime(updated.getCleanFirstReservationTime())
-			.cleanSecondReservationTime(updated.getCleanSecondReservationTime())
-			.cleanStatus(updated.getCleanStatus())
-			.cleanNote(updated.getCleanNote())
+			.asDescription(updated.getAsDescription())
+			.asAdress(updated.getAsAdress())
+			.asDetailAdress(updated.getAsDetailAdress())
+			.asEditTime(updated.getAsEditTime())
+			.asFirstReservationTime(updated.getAsFirstReservationTime())
+			.asSecondReservationTime(updated.getAsSecondReservationTime())
+			.asStatus(updated.getAsStatus())
+			.asNote(updated.getAsNote())
 			.registeredUserGrade(updated.getRegisteredUserGrade())
 			.build();
 	}
 
-	// 관리자 수정: cleanStatus와 cleanNote만 수정 가능
+	// 관리자 수정: asStatus와 asNote만 수정 가능
 	@Transactional
 	public ASDTO editASRequestForAdmin(Integer asId, ASDTO dto) {
 		// 현재 로그인한 관리자 사용자 검증
@@ -243,32 +243,32 @@ public class ASService {
 		ASEntity entity = asRepository.findById(asId)
 			.orElseThrow(() -> new ResourceNotFoundException("세척 신청을 찾을 수 없습니다."));
 
-		if (entity.getASStatus() == CleanStatus.FALLSE) {
+		if (entity.getAsStatus() == ASStatus.FALLSE) {
 			throw new ResourceNotFoundException("해당 세척 신청은 삭제되었습니다.");
 		}
 
-		// 관리자용 수정: cleanStatus와 cleanNote만 업데이트
-		entity.setCleanStatus(dto.getCleanStatus());
-		entity.setCleanNote(dto.getCleanNote());
-		entity.setCleanEditTime(LocalDateTime.now());
+		// 관리자용 수정: asStatus와 asNote만 업데이트
+		entity.setAsStatus(dto.getAsStatus());
+		entity.setAsNote(dto.getAsNote());
+		entity.setAsEditTime(LocalDateTime.now());
 
 		ASEntity updated = asRepository.save(entity);
 
 		return ASDTO.builder()
-			.cleanId(updated.getCleanId())
-			.cleanName(updated.getCleanName())
-			.cleanNumber(updated.getCleanNumber())
-			.cleanEmail(updated.getCleanEmail())
+			.asId(updated.getAsId())
+			.asName(updated.getAsName())
+			.asNumber(updated.getAsNumber())
+			.asEmail(updated.getAsEmail())
 			.productType(updated.getProductType())
-			.cleanDescription(updated.getCleanDescription())
-			.cleanAdress(updated.getCleanAdress())
-			.cleanDetailAdress(updated.getCleanDetailAdress())
-			.cleanStartTime(updated.getCleanStartTime())
-			.cleanEditTime(updated.getCleanEditTime())
-			.cleanFirstReservationTime(updated.getCleanFirstReservationTime())
-			.cleanSecondReservationTime(updated.getCleanSecondReservationTime())
-			.cleanStatus(updated.getCleanStatus())
-			.cleanNote(updated.getCleanNote())
+			.asDescription(updated.getAsDescription())
+			.asAdress(updated.getAsAdress())
+			.asDetailAdress(updated.getAsDetailAdress())
+			.asStartTime(updated.getAsStartTime())
+			.asEditTime(updated.getAsEditTime())
+			.asFirstReservationTime(updated.getAsFirstReservationTime())
+			.asSecondReservationTime(updated.getAsSecondReservationTime())
+			.asStatus(updated.getAsStatus())
+			.asNote(updated.getAsNote())
 			.registeredUserGrade(updated.getRegisteredUserGrade())
 			.build();
 	}
@@ -278,8 +278,8 @@ public class ASService {
 	public void deleteASRequest(Integer asId) {
 		ASEntity entity = asRepository.findById(asId)
 			.orElseThrow(() -> new ResourceNotFoundException("세척 신청을 찾을 수 없습니다."));
-		entity.setASStatus(CleanStatus.FALLSE);
-		entity.setASEndTime(LocalDateTime.now());
+		entity.setAsStatus(ASStatus.FALLSE);
+		entity.setAsEndTime(LocalDateTime.now());
 		asRepository.save(entity);
 	}
 }

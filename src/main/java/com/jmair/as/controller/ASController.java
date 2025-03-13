@@ -20,8 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.jmair.as.dto.ASDTO;
 import com.jmair.as.service.ASService;
 import com.jmair.auth.entity.User;
-import com.jmair.cleaning.dto.CleaningDTO;
-import com.jmair.cleaning.service.CleanService;
 import com.jmair.common.exeption.ForbiddenException;
 import com.jmair.common.exeption.ResourceNotFoundException;
 import com.jmair.common.exeption.UnauthorizedException;
@@ -60,7 +58,7 @@ public class ASController {
 			currentUser = Optional.of((User) auth.getPrincipal());
 		}
 		try {
-			List<CleaningDTO> list = asService.getAllASRequests(currentUser, asName, asNumber);
+			List<ASDTO> list = asService.getAllASRequests(currentUser, asName, asNumber);
 			return ResponseEntity.ok(list);
 		} catch (IllegalArgumentException e) {
 			return ResponseEntity.badRequest().body(e.getMessage());
