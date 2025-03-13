@@ -62,6 +62,10 @@ public class CorsAndSecurityConfig {
 				.requestMatchers(HttpMethod.GET, "/api/v1/notices/**").permitAll()
 				.requestMatchers(HttpMethod.GET, "/api/v1/install/**").permitAll()
 				.requestMatchers(HttpMethod.POST, "/api/v1/install/**").permitAll()
+				.requestMatchers(HttpMethod.GET, "/api/v1/clean/**").permitAll()
+				.requestMatchers(HttpMethod.POST, "/api/v1/clean/**").permitAll()
+				.requestMatchers(HttpMethod.GET, "/api/v1/as/**").permitAll()
+				.requestMatchers(HttpMethod.POST, "/api/v1/as/**").permitAll()
 				// 인증 관련 URL은 모두 허용
 				.requestMatchers("/api/v1/auth/**").permitAll()
 				.anyRequest().authenticated()
