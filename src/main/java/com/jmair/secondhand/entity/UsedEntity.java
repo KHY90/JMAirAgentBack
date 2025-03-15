@@ -56,6 +56,7 @@ public class UsedEntity {
 	private String usedNote;
 	@Column(columnDefinition = "LONGTEXT")
 	private String usedImages;
+	private Integer registeredUserId;
 }
 
 

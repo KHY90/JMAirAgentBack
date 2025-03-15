@@ -148,10 +148,11 @@ public class UsedService {
 			.usedState(entity.getUsedState())
 			.usedNote(entity.getUsedNote())
 			.usedImages(imagesList)
+			.registeredUserId(entity.getRegisteredUserId())
 			.build();
 	}
 
-	// 수정
+	// 관리자 수정
 	@Transactional
 	public UsedDTO updateUsedRequest(Integer usedId, UsedDTO dto, Optional<User> currentUser) {
 		UsedEntity entity = usedRepository.findById(usedId)
@@ -163,36 +164,18 @@ public class UsedService {
 				currentUser.get().getUserGrade() == UserGrade.ADMIN);
 
 		UsedEntity updatedEntity;
-		if (isAdmin) {
-			// 관리자
-			updatedEntity = entity.toBuilder()
-				.usedName(dto.getUsedName())
-				.usedCost(dto.getUsedCost())
-				.productType(dto.getProductType())
-				.usedDescription(dto.getUsedDescription())
-				.usedYear(dto.getUsedYear())
-				.usedTime(dto.getUsedTime())
-				.usedEditTime(LocalDateTime.now())
-				.usedState(dto.getUsedState())
-				.usedNote(dto.getUsedNote())
-				.build();
-		} else {
-			// 유저
-			if (!entity.getUsedState().equals(Used.SALE)) {
-				throw new ForbiddenException("일반 사용자는 수정할 수 없습니다.");
-			}
-			updatedEntity = entity.toBuilder()
-				.usedName(dto.getUsedName())
-				.usedCost(dto.getUsedCost())
-				.productType(dto.getProductType())
-				.usedDescription(dto.getUsedDescription())
-				.usedYear(dto.getUsedYear())
-				.usedTime(dto.getUsedTime())
-				.usedEditTime(LocalDateTime.now())
-				.usedState(Used.RESERVATION)
-				.usedNote(dto.getUsedNote())
-				.build();
-		}
+
+		updatedEntity = entity.toBuilder()
+			.usedName(dto.getUsedName())
+			.usedCost(dto.getUsedCost())
+			.productType(dto.getProductType())
+			.usedDescription(dto.getUsedDescription())
+			.usedYear(dto.getUsedYear())
+			.usedTime(dto.getUsedTime())
+			.usedEditTime(LocalDateTime.now())
+			.usedState(dto.getUsedState())
+			.usedNote(dto.getUsedNote())
+			.build();
 
 		UsedEntity updated = usedRepository.save(entity);
 
@@ -209,6 +192,53 @@ public class UsedService {
 			.usedEndTime(updated.getUsedEndTime())
 			.usedState(updated.getUsedState())
 			.usedNote(updated.getUsedNote())
+			.build();
+	}
+
+	// 유저 구매요청
+	@Transactional
+	public UsedDTO updateUsedSaleRequest(Integer usedId, UsedDTO dto, Optional<User> currentUser) {
+		if (currentUser.isEmpty()) {
+			throw new UnauthorizedException("로그인한 사용자 정보가 없습니다.");
+		}
+		User user = currentUser.get();
+
+		UsedEntity entity = usedRepository.findById(usedId)
+			.orElseThrow(() -> new ResourceNotFoundException("중고 에어컨을 찾을 수 없습니다."));
+
+		if (!entity.getUsedState().equals(Used.SALE)) {
+			throw new ForbiddenException("판매 중인 상품이 아닙니다.");
+		}
+
+		UsedEntity updatedEntity = entity.toBuilder()
+			.usedName(dto.getUsedName())
+			.usedCost(dto.getUsedCost())
+			.productType(dto.getProductType())
+			.usedDescription(dto.getUsedDescription())
+			.usedYear(dto.getUsedYear())
+			.usedTime(dto.getUsedTime())
+			.usedEditTime(LocalDateTime.now())
+			.usedState(Used.RESERVATION)
+			.usedNote(dto.getUsedNote())
+			.registeredUserId(user.getId())
+			.build();
+
+		UsedEntity updated = usedRepository.save(updatedEntity);
+
+		return UsedDTO.builder()
+			.usedId(updated.getUsedId())
+			.usedName(updated.getUsedName())
+			.usedCost(updated.getUsedCost())
+			.productType(updated.getProductType())
+			.usedDescription(updated.getUsedDescription())
+			.usedYear(updated.getUsedYear())
+			.usedTime(updated.getUsedTime())
+			.usedPostTime(updated.getUsedPostTime())
+			.usedEditTime(updated.getUsedEditTime())
+			.usedEndTime(updated.getUsedEndTime())
+			.usedState(updated.getUsedState())
+			.usedNote(updated.getUsedNote())
+			.registeredUserId(updated.getRegisteredUserId())
 			.build();
 	}
 

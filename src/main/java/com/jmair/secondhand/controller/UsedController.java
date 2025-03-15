@@ -80,7 +80,7 @@ public class UsedController {
 		}
 	}
 
-	// 수정
+	// 관리자 수정
 	@PutMapping("/{usedId}/edit")
 	public ResponseEntity<?> updateUsedRequest(@PathVariable Integer usedId,
 		@Valid @RequestBody UsedDTO dto) {
@@ -91,6 +91,31 @@ public class UsedController {
 		}
 		try {
 			UsedDTO updated = usedService.updateUsedRequest(usedId, dto, currentUser);
+			return ResponseEntity.ok(updated);
+		} catch (UnauthorizedException e) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+		} catch (ForbiddenException e) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+		} catch (ResourceNotFoundException e) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+		} catch (Exception e) {
+			logger.error("중고 에어컨 수정 중 오류", e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body("중고 에어컨 수정 중 오류가 발생했습니다.");
+		}
+	}
+
+	// 구매 요청
+	@PutMapping("/{usedId}/sale")
+	public ResponseEntity<?> updateUsedSaleRequest(@PathVariable Integer usedId,
+		@Valid @RequestBody UsedDTO dto) {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		Optional<User> currentUser = Optional.empty();
+		if (auth != null && auth.getPrincipal() instanceof User) {
+			currentUser = Optional.of((User) auth.getPrincipal());
+		}
+		try {
+			UsedDTO updated = usedService.updateUsedSaleRequest(usedId, dto, currentUser);
 			return ResponseEntity.ok(updated);
 		} catch (UnauthorizedException e) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());

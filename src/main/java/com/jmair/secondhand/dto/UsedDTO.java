@@ -47,5 +47,5 @@ public class UsedDTO {
 	private String usedNote;
 	// 이미지
 	private List<String> usedImages;
-
+	private Integer registeredUserId;
 }
