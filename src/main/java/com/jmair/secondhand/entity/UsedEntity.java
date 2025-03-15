@@ -24,7 +24,7 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class UsedEntity {
@@ -35,26 +35,27 @@ public class UsedEntity {
 	@Column(nullable = false)
 	private String usedName;
 	@Column(nullable = false)
-	private int usedCost;
+	private String usedCost;
 	private String productType;
 	// 제품 설명
 	@Column(length = 2000)
 	private String usedDescription;
 	// 물건 제작연도
 	private String usedYear;
+	private String usedTime;
 	// 게시물 등록, 수정, 삭제 시간
 	@CreationTimestamp
 	@Column(nullable = false, updatable = false)
-	private LocalDateTime usedStartTime;
+	private LocalDateTime usedPostTime;
 	private LocalDateTime usedEditTime;
 	private LocalDateTime usedEndTime;
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
 	private Used usedState;
-	private boolean status;
 	@Size(max = 1000, message = "비고는 최대 1000자까지 입력 가능합니다.")
 	private String usedNote;
-
+	@Column(columnDefinition = "LONGTEXT")
+	private String usedImages;
 }
 
 
