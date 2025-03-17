@@ -9,8 +9,8 @@ public class SocialDTO {
 
 	@NotBlank(message = "ID는 필수입니다.")
 	private String userLogin;
-
 	private String userName;
 	private String userEmail;
+	private UserGrade userGrade;
 
 }

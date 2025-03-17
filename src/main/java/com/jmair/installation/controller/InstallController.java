@@ -39,7 +39,7 @@ public class InstallController {
 	private final InstallService installService;
 
 	// 설치 신청 등록
-	@PostMapping
+	@PostMapping("/post")
 	public ResponseEntity<?> createInstallRequest(@Valid @RequestBody InstallDTO dto) {
 		try {
 			InstallDTO created = installService.createInstallRequest(dto);
@@ -82,7 +82,7 @@ public class InstallController {
 		@PathVariable Integer installId,
 		@RequestParam(value = "password", required = false) String providedPassword,
 		HttpServletRequest request) {
-		// 현재 로그인한 사용자가 있다면 가져오기 (없으면 empty)
+
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		Optional<User> currentUser = Optional.empty();
 		if (auth != null && auth.getPrincipal() instanceof User) {

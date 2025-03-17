@@ -3,6 +3,7 @@ package com.jmair.installation.dto;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.jmair.auth.dto.UserDTO;
 import com.jmair.auth.dto.UserGrade;
 
 import jakarta.validation.constraints.Email;
@@ -27,6 +28,8 @@ public class InstallDTO {
 	private String installName;
 	@NotBlank(message = "주소는 필수입니다.")
 	private String installAddress;
+	@NotBlank(message = "상세 주소는 필수입니다.")
+	private String installDetailAddress;
 	@NotBlank(message = "핸드폰 번호는 필수입니다.")
 	private String installPhone;
 	private String installNumber;
@@ -43,6 +46,9 @@ public class InstallDTO {
 	// 예약 수정 날짜
 	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
 	private LocalDateTime editTime;
+	// 취소 날짜
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
+	private LocalDateTime cancelTime;
 	// 예약 희망 날짜
 	private String reservationFirstDate;
 	private String reservationSecondDate;

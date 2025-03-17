@@ -46,6 +46,7 @@ public class InstallService {
 		InstallRequest request = InstallRequest.builder()
 			.installName(installDTO.getInstallName())
 			.installAddress(installDTO.getInstallAddress())
+			.installDetailAddress(installDTO.getInstallDetailAddress())
 			.installPhone(installDTO.getInstallPhone())
 			.installNumber(installDTO.getInstallNumber())
 			.installEmail(installDTO.getInstallEmail())
@@ -68,6 +69,7 @@ public class InstallService {
 			.installId(saved.getInstallId())
 			.installName(saved.getInstallName())
 			.installAddress(saved.getInstallAddress())
+			.installDetailAddress(saved.getInstallDetailAddress())
 			.installPhone(saved.getInstallPhone())
 			.installNumber(saved.getInstallNumber())
 			.installEmail(saved.getInstallEmail())
@@ -99,6 +101,7 @@ public class InstallService {
 						.installId(req.getInstallId())
 						.installName(req.getInstallName())
 						.installAddress(req.getInstallAddress())
+						.installDetailAddress(req.getInstallDetailAddress())
 						.installPhone(req.getInstallPhone())
 						.installNumber(req.getInstallNumber())
 						.installEmail(req.getInstallEmail())
@@ -122,6 +125,7 @@ public class InstallService {
 				.installId(req.getInstallId())
 				.installName(req.getInstallName())
 				.installAddress(req.getInstallAddress())
+				.installDetailAddress(req.getInstallDetailAddress())
 				.installPhone(req.getInstallPhone())
 				.installNumber(req.getInstallNumber())
 				.installEmail(req.getInstallEmail())
@@ -167,6 +171,7 @@ public class InstallService {
 			.installId(request.getInstallId())
 			.installName(request.getInstallName())
 			.installAddress(request.getInstallAddress())
+			.installDetailAddress(request.getInstallDetailAddress())
 			.installPhone(request.getInstallPhone())
 			.installNumber(request.getInstallNumber())
 			.installEmail(request.getInstallEmail())
@@ -193,6 +198,7 @@ public class InstallService {
 		InstallRequest updatedRequest = request.toBuilder()
 			.installName(installDTO.getInstallName())
 			.installAddress(installDTO.getInstallAddress())
+			.installDetailAddress(installDTO.getInstallDetailAddress())
 			.installPhone(installDTO.getInstallPhone())
 			.installNumber(installDTO.getInstallNumber())
 			.installEmail(installDTO.getInstallEmail())
@@ -209,6 +215,7 @@ public class InstallService {
 			.installId(saved.getInstallId())
 			.installName(saved.getInstallName())
 			.installAddress(saved.getInstallAddress())
+			.installDetailAddress(saved.getInstallDetailAddress())
 			.installPhone(saved.getInstallPhone())
 			.installNumber(saved.getInstallNumber())
 			.installEmail(saved.getInstallEmail())
@@ -249,11 +256,12 @@ public class InstallService {
 			.installId(updated.getInstallId())
 			.installName(updated.getInstallName())
 			.installAddress(updated.getInstallAddress())
+			.installDetailAddress(updated.getInstallDetailAddress())
 			.installPhone(updated.getInstallPhone())
 			.installNumber(updated.getInstallNumber())
 			.installEmail(updated.getInstallEmail())
 			.installDescription(updated.getInstallDescription())
-			.requestDate(updated.getRequestDate())
+			.editTime(updated.getEditTime())
 			.reservationFirstDate(updated.getReservationFirstDate())
 			.reservationSecondDate(updated.getReservationSecondDate())
 			.installStatus(updated.getInstallStatus())
@@ -277,6 +285,7 @@ public class InstallService {
 		InstallRequest request = installRepository.findById(installId)
 			.orElseThrow(() -> new ResourceNotFoundException("설치 신청을 찾을 수 없습니다."));
 		request.setInstallStatus(Install.FALLSE);
+		request.setCancelTime(LocalDateTime.now());
 		installRepository.save(request);
 	}
 }

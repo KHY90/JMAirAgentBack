@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 
 import com.jmair.auth.dto.UserGrade;
+import com.jmair.auth.entity.User;
 import com.jmair.installation.dto.Install;
 
 import jakarta.persistence.Column;
@@ -36,6 +37,8 @@ public class InstallRequest {
 	private String installName;
 	@Column(nullable = false, length = 200)
 	private String installAddress;
+	@Column(nullable = false, length = 200)
+	private String installDetailAddress;
 	@Column(nullable = false, length = 20)
 	private String installPhone;
 	private String installNumber;
@@ -48,6 +51,7 @@ public class InstallRequest {
 	@Column(nullable = false, updatable = false)
 	private LocalDateTime requestDate;
 	private LocalDateTime editTime;
+	private LocalDateTime cancelTime;
 	@Column(nullable = false)
 	private String reservationFirstDate;
 	@Column
@@ -59,4 +63,5 @@ public class InstallRequest {
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
 	private UserGrade registeredUserGrade;
+
 }

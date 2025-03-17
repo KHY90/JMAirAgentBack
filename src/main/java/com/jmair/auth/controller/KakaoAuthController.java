@@ -90,21 +90,23 @@ public class KakaoAuthController {
 			.header("Content-Type", MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 			.body(BodyInserters.fromFormData(formData))
 			.retrieve()
-			.bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+			.bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
+			})
 			.flatMap(tokenData -> {
 				if (tokenData == null || !tokenData.containsKey("access_token")) {
 					logger.error("카카오 토큰 발급 실패: tokenData={}", tokenData);
 					return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
 						.body("카카오 토큰 발급에 실패했습니다."));
 				}
-				String accessToken = (String) tokenData.get("access_token");
+				String accessToken = (String)tokenData.get("access_token");
 
 				// 3. 카카오 프로필 조회
 				return webClient.get()
 					.uri(kakaoProfileUri)
 					.header("Authorization", "Bearer " + accessToken)
 					.retrieve()
-					.bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+					.bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
+					})
 					.publishOn(Schedulers.boundedElastic())
 					.flatMap(profileData -> {
 						Object idObj = profileData.get("id");
@@ -121,7 +123,9 @@ public class KakaoAuthController {
 						if (accountObj != null) {
 							try {
 								ObjectMapper mapper = new ObjectMapper();
-								kakaoAccount = mapper.convertValue(accountObj, new TypeReference<Map<String, Object>>() {});
+								kakaoAccount = mapper.convertValue(accountObj,
+									new TypeReference<Map<String, Object>>() {
+									});
 							} catch (IllegalArgumentException e) {
 								logger.error("카카오 계정 정보 변환 오류: {}", accountObj, e);
 								return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -133,14 +137,16 @@ public class KakaoAuthController {
 								.body("카카오 계정 정보가 없습니다."));
 						}
 
-						String email = (String) kakaoAccount.get("email");
+						String email = (String)kakaoAccount.get("email");
 						String nickname = null;
 						Object profileObj = kakaoAccount.get("profile");
 						if (profileObj != null) {
 							try {
 								ObjectMapper mapper = new ObjectMapper();
-								Map<String, Object> profile = mapper.convertValue(profileObj, new TypeReference<Map<String, Object>>() {});
-								nickname = (String) profile.get("nickname");
+								Map<String, Object> profile = mapper.convertValue(profileObj,
+									new TypeReference<Map<String, Object>>() {
+									});
+								nickname = (String)profile.get("nickname");
 							} catch (IllegalArgumentException e) {
 								logger.error("카카오 프로필 정보 변환 오류: {}", profileObj, e);
 							}
@@ -151,30 +157,35 @@ public class KakaoAuthController {
 						socialLoginDTO.setUserName(nickname);
 						socialLoginDTO.setUserEmail(email);
 
-						// 사용자 로그인/회원가입 처리
-						Map<String, Object> result = userService.kakaoLogin(socialLoginDTO);
-						String jwtAccessToken = (String) result.get("accessToken");
-						String jwtRefreshToken = (String) result.get("refreshToken");
+						// 블로킹 호출을 별도의 스레드에서 실행
+						return Mono.fromCallable(() -> userService.kakaoLogin(socialLoginDTO))
+							.subscribeOn(Schedulers.boundedElastic())
+							.flatMap(result -> {
+								User user = userService.getUserByLogin(kakaoId);
+								result.put("userGrade", user.getUserGrade());
 
-						// httpOnly 쿠키 생성
-						ResponseCookie accessCookie = ResponseCookie.from("access_token", jwtAccessToken)
-							.httpOnly(true)
-							.secure(false) // 배포시 true로 변경
-							.path("/")
-							.maxAge(15 * 60)
-							.build();
-						ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", jwtRefreshToken)
-							.httpOnly(true)
-							.secure(false) // 배포시 true로 변경
-							.path("/")
-							.maxAge(7 * 24 * 60 * 60)
-							.build();
+								String jwtAccessToken = (String)result.get("accessToken");
+								String jwtRefreshToken = (String)result.get("refreshToken");
 
-						return Mono.just(ResponseEntity.status(HttpStatus.FOUND)
-							.header("Set-Cookie", accessCookie.toString())
-							.header("Set-Cookie", refreshCookie.toString())
-							.header("Location", RedirectUri)
-							.build());
+								ResponseCookie accessCookie = ResponseCookie.from("access_token", jwtAccessToken)
+									.httpOnly(true)
+									.secure(false) // 배포시 true로 변경
+									.path("/")
+									.maxAge(15 * 60)
+									.build();
+								ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", jwtRefreshToken)
+									.httpOnly(true)
+									.secure(false) // 배포시 true로 변경
+									.path("/")
+									.maxAge(7 * 24 * 60 * 60)
+									.build();
+
+								return Mono.just(ResponseEntity.status(HttpStatus.FOUND)
+									.header("Set-Cookie", accessCookie.toString())
+									.header("Set-Cookie", refreshCookie.toString())
+									.header("Location", RedirectUri)
+									.build());
+							});
 					});
 			})
 			.onErrorResume(e -> {
