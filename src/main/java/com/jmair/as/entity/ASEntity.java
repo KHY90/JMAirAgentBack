@@ -47,8 +47,8 @@ public class ASEntity {
 	@Column(nullable = false)
 	private String asPassword;
 	@Column(nullable = false, length = 200)
-	private LocalDateTime asFirstReservationTime;
-	private LocalDateTime asSecondReservationTime;
+	private String asFirstReservationTime;
+	private String asSecondReservationTime;
 	@CreationTimestamp
 	@Column(nullable = false, updatable = false)
 	private LocalDateTime asStartTime;

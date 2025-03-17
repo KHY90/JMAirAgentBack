@@ -64,6 +64,8 @@ public class CorsAndSecurityConfig {
 				.requestMatchers(HttpMethod.POST, "/api/v1/install/**").permitAll()
 				.requestMatchers(HttpMethod.GET, "/api/v1/used/**").permitAll()
 				.requestMatchers(HttpMethod.POST, "/api/v1/used/**").permitAll()
+				.requestMatchers(HttpMethod.POST, "/api/v1/service/**").permitAll()
+				.requestMatchers(HttpMethod.GET, "/api/v1/service/**").permitAll()
 				.requestMatchers(HttpMethod.GET, "/api/v1/clean/**").permitAll()
 				.requestMatchers(HttpMethod.POST, "/api/v1/clean/**").permitAll()
 				.requestMatchers(HttpMethod.GET, "/api/v1/as/**").permitAll()

@@ -44,9 +44,11 @@ public class CleanEntity {
 	private String cleanAdress;
 	@Column(nullable = false, length = 200)
 	private String cleanDetailAdress;
+
 	@Column(nullable = false, length = 200)
-	private LocalDateTime cleanFirstReservationTime;
-	private LocalDateTime cleanSecondReservationTime;
+	private String cleanFirstReservationTime;
+	private String cleanSecondReservationTime;
+
 	@CreationTimestamp
 	@Column(nullable = false, updatable = false)
 	private LocalDateTime cleanStartTime;

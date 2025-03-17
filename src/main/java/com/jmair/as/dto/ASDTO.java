@@ -41,10 +41,8 @@ public class ASDTO {
 	@NotBlank(message = "비밀번호는 필수입니다.")
 	@Size(min = 4, max = 4, message = "비밀번호는 4자리 숫자로 해주세요.")
 	private String asPassword;
-	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm", timezone = "Asia/Seoul")
-	private LocalDateTime asFirstReservationTime;
-	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm", timezone = "Asia/Seoul")
-	private LocalDateTime asSecondReservationTime;
+	private String asFirstReservationTime;
+	private String asSecondReservationTime;
 	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
 	private LocalDateTime asStartTime;
 	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")

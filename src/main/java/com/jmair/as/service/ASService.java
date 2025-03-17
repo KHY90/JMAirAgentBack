@@ -52,7 +52,6 @@ public class ASService {
 			.asDescription(dto.getAsDescription())
 			.asAdress(dto.getAsAdress())
 			.asDetailAdress(dto.getAsDetailAdress())
-			// 비밀번호는 암호화해서 저장
 			.asPassword(passwordEncoder.encode(dto.getAsPassword()))
 			.asStatus(ASStatus.REQUEST)
 			.asFirstReservationTime(dto.getAsFirstReservationTime())
