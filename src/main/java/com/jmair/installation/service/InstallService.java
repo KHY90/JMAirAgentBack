@@ -181,6 +181,7 @@ public class InstallService {
 			.reservationSecondDate(request.getReservationSecondDate())
 			.installStatus(request.getInstallStatus())
 			.installNote(request.getInstallNote())
+			.registeredUserGrade(request.getRegisteredUserGrade())
 			.build();
 	}
 

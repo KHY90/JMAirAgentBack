@@ -94,15 +94,9 @@ public class ASService {
 					.map(entity -> ASDTO.builder()
 						.asId(entity.getAsId())
 						.asName(entity.getAsName())
-						.asNumber(entity.getAsNumber())
-						.asEmail(entity.getAsEmail())
 						.productType(entity.getProductType())
-						.asDescription(entity.getAsDescription())
-						.asAdress(entity.getAsAdress())
-						.asDetailAdress(entity.getAsDetailAdress())
 						.asStartTime(entity.getAsStartTime())
-						.asFirstReservationTime(entity.getAsFirstReservationTime())
-						.asSecondReservationTime(entity.getAsSecondReservationTime())
+						.asEditTime(entity.getAsEditTime())
 						.asStatus(entity.getAsStatus())
 						.registeredUserGrade(entity.getRegisteredUserGrade())
 						.build())
@@ -134,23 +128,26 @@ public class ASService {
 			.collect(Collectors.toList());
 	}
 
-	// 상세 조회
 	@Transactional(readOnly = true)
 	public ASDTO getASRequestDetail(Integer asId, String providedPassword, Optional<User> currentUser) {
 		ASEntity entity = asRepository.findById(asId)
 			.orElseThrow(() -> new ResourceNotFoundException("세척 신청을 찾을 수 없습니다."));
-
 		if (entity.getAsStatus() == ASStatus.FALLSE) {
 			throw new ResourceNotFoundException("해당 세척 신청은 삭제되었습니다.");
 		}
-
-		// 관리 권한이 없는 경우 비밀번호 검증 (로그인하지 않은 경우도 포함)
-		if (currentUser.isEmpty() || !(currentUser.get().getUserGrade() == UserGrade.ENGINEER ||
-			currentUser.get().getUserGrade() == UserGrade.ADMIN ||
-			currentUser.get().getUserGrade() == UserGrade.SUPERADMIN ||
-			currentUser.get().getUserGrade() == UserGrade.ADMINWATCHER)) {
-			if (providedPassword == null || !passwordEncoder.matches(providedPassword, entity.getAsPassword())) {
-				throw new UnauthorizedException("비밀번호가 일치하지 않거나 비밀번호가 필요합니다.");
+		boolean isAdmin = currentUser.isPresent() &&
+			(currentUser.get().getUserGrade() == UserGrade.ENGINEER ||
+				currentUser.get().getUserGrade() == UserGrade.ADMIN ||
+				currentUser.get().getUserGrade() == UserGrade.SUPERADMIN ||
+				currentUser.get().getUserGrade() == UserGrade.ADMINWATCHER);
+		if (!isAdmin) {
+			if (providedPassword == null || providedPassword.isBlank()) {
+				throw new UnauthorizedException("비밀번호가 필요합니다.");
+			}
+			boolean matches = passwordEncoder.matches(providedPassword, entity.getAsPassword());
+			System.out.println("passwordEncoder.matches 결과: " + matches);
+			if (!matches) {
+				throw new UnauthorizedException("비밀번호가 일치하지 않습니다.");
 			}
 		}
 

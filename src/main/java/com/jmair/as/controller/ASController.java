@@ -1,6 +1,7 @@
 package com.jmair.as.controller;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
@@ -88,6 +89,29 @@ public class ASController {
 		} catch(Exception e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 				.body("세척 신청 상세 조회 중 오류가 발생했습니다.");
+		}
+	}
+
+	// 유저 상세 조회
+	@PostMapping("/user/{asId}")
+	public ResponseEntity<?> getCleaningRequestDetailWithPassword(
+		@PathVariable Integer asId,
+		@RequestBody Map<String, String> requestBody
+	) {
+		String providedPassword = requestBody.get("password");
+		if (providedPassword == null || providedPassword.isBlank()) {
+			return ResponseEntity.badRequest().body("비밀번호는 필수입니다.");
+		}
+		try {
+			ASDTO dto = asService.getASRequestDetail(asId, providedPassword, Optional.empty());
+			return ResponseEntity.ok(dto);
+		} catch (UnauthorizedException e) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+		} catch (ResourceNotFoundException e) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body("AS 신청 상세 조회 중 오류가 발생했습니다.");
 		}
 	}
 

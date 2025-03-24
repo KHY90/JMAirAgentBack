@@ -70,6 +70,8 @@ public class CorsAndSecurityConfig {
 				.requestMatchers(HttpMethod.POST, "/api/v1/clean/**").permitAll()
 				.requestMatchers(HttpMethod.GET, "/api/v1/as/**").permitAll()
 				.requestMatchers(HttpMethod.POST, "/api/v1/as/**").permitAll()
+				.requestMatchers(HttpMethod.POST, "/api/v1/user/**").permitAll()
+				.requestMatchers(HttpMethod.GET, "/api/v1/user/**").permitAll()
 				// 인증 관련 URL은 모두 허용
 				.requestMatchers("/api/v1/auth/**").permitAll()
 				.anyRequest().authenticated()

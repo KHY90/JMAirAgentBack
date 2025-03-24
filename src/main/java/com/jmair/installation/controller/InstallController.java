@@ -1,6 +1,7 @@
 package com.jmair.installation.controller;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.jmair.as.dto.ASDTO;
 import com.jmair.auth.entity.User;
 import com.jmair.common.exeption.ForbiddenException;
 import com.jmair.common.exeption.ResourceNotFoundException;
@@ -98,6 +100,29 @@ public class InstallController {
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 				.body("설치 신청 상세 조회 중 오류가 발생했습니다.");
+		}
+	}
+
+	// 유저 상세 조회
+	@PostMapping("/user/{installId}")
+	public ResponseEntity<?> getInstallRequestDetail(
+		@PathVariable Integer installId,
+		@RequestBody Map<String, String> requestBody
+	) {
+		String providedPassword = requestBody.get("password");
+		if (providedPassword == null || providedPassword.isBlank()) {
+			return ResponseEntity.badRequest().body("비밀번호는 필수입니다.");
+		}
+		try {
+			InstallDTO dto = installService.getInstallRequestDetail(installId, providedPassword, Optional.empty());
+			return ResponseEntity.ok(dto);
+		} catch (UnauthorizedException e) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+		} catch (ResourceNotFoundException e) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body("견적 신청 상세 조회 중 오류가 발생했습니다.");
 		}
 	}
 
