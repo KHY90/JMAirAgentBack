@@ -57,8 +57,8 @@ public class InstallController {
 	// 전체 조회
 	@GetMapping
 	public ResponseEntity<?> getAllInstallRequests(
-		@RequestParam(value = "installName", required = false) String installName,
-		@RequestParam(value = "installPhone", required = false) String installPhone,
+		@RequestParam(value = "name", required = false) String installName,
+		@RequestParam(value = "phone", required = false) String installPhone,
 		HttpServletRequest request) {
 		try {
 			// 현재 로그인한 사용자가 있다면 가져오기 (없으면 empty)
