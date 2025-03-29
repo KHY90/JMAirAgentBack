@@ -1,14 +1,19 @@
 package com.jmair.auth.controller;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -40,6 +45,7 @@ public class UserController {
 	private final UserService userService;
 	private final TokenService tokenService;
 	private final JwtUtil jwtUtil;
+	private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
 	@Autowired
 	public UserController(UserService userService, TokenService tokenService, JwtUtil jwtUtil) {
@@ -167,6 +173,53 @@ public class UserController {
 			}
 		} catch (TokenInvalidException e) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유효하지 않은 토큰입니다.");
+		}
+	}
+
+	// 전체 조회
+	@GetMapping("/all")
+	public ResponseEntity<?> getAllUsers() {
+		try {
+			List<User> users = userService.getAllUsers();
+			List<Map<String, Object>> dtos = users.stream().map(u -> {
+				Map<String, Object> map = new HashMap<>();
+				map.put("userLogin", u.getUserLogin());
+				map.put("userName", u.getUserName());
+				map.put("email", u.getEmail());
+				map.put("phoneNumber", u.getPhoneNumber());
+				map.put("joinDate", u.getJoinDate());
+				map.put("userGrade", u.getUserGrade());
+				map.put("status", u.isStatus());
+				return map;
+			}).collect(Collectors.toList());
+
+			return ResponseEntity.ok(dtos);
+		} catch (Exception e) {
+			logger.error("회원 목록 조회 중 오류가 발생했습니다.", e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body("회원 목록 조회 중 오류가 발생했습니다.");
+		}
+	}
+
+	// 회원 상세 조회
+	@GetMapping("/{userLogin}")
+	public ResponseEntity<?> getUserDetail(@PathVariable String userLogin) {
+		try {
+			User user = userService.getUserByLogin(userLogin);
+			Map<String, Object> dto = Map.of(
+				"userLogin", user.getUserLogin(),
+				"userName", user.getUserName(),
+				"email", user.getEmail(),
+				"phoneNumber", user.getPhoneNumber(),
+				"joinDate", user.getJoinDate(),
+				"userGrade", user.getUserGrade(),
+				"status", user.isStatus()
+			);
+			return ResponseEntity.ok(dto);
+		} catch (Exception e) {
+			logger.error("회원 상세 조회 중 오류가 발생했습니다.", e);
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+				.body("회원 정보를 찾을 수 없습니다.");
 		}
 	}
 

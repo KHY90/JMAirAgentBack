@@ -2,6 +2,7 @@ package com.jmair.auth.service;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -147,6 +148,12 @@ public class UserService {
 	public User getUserByLogin(String userLogin) {
 		return userRepository.findByUserLogin(userLogin)
 			.orElseThrow(() -> new IllegalArgumentException("유저 정보를 찾을 수 없습니다."));
+	}
+
+	// 전체 회원 조회
+	@Transactional(readOnly = true)
+	public List<User> getAllUsers() {
+		return userRepository.findAll();
 	}
 
 	// 회원탈퇴
