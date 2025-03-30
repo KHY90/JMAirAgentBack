@@ -24,12 +24,15 @@ import org.springframework.web.bind.annotation.RestController;
 import com.jmair.auth.dto.LoginDTO;
 import com.jmair.auth.dto.Tokens;
 import com.jmair.auth.dto.UserDTO;
+import com.jmair.auth.dto.UserGrade;
 import com.jmair.auth.entity.User;
 import com.jmair.auth.service.TokenService;
 import com.jmair.auth.service.UserService;
 import com.jmair.auth.util.JwtUtil;
+import com.jmair.common.exeption.ForbiddenException;
 import com.jmair.common.exeption.TokenExpiredException;
 import com.jmair.common.exeption.TokenInvalidException;
+import com.jmair.common.exeption.UnauthorizedException;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -176,24 +179,15 @@ public class UserController {
 		}
 	}
 
-	// 전체 조회
+	// 관리자용: 전체 회원 목록 조회
 	@GetMapping("/all")
-	public ResponseEntity<?> getAllUsers() {
+	public ResponseEntity<?> getAllUsers(HttpServletRequest request) {
 		try {
-			List<User> users = userService.getAllUsers();
-			List<Map<String, Object>> dtos = users.stream().map(u -> {
-				Map<String, Object> map = new HashMap<>();
-				map.put("userLogin", u.getUserLogin());
-				map.put("userName", u.getUserName());
-				map.put("email", u.getEmail());
-				map.put("phoneNumber", u.getPhoneNumber());
-				map.put("joinDate", u.getJoinDate());
-				map.put("userGrade", u.getUserGrade());
-				map.put("status", u.isStatus());
-				return map;
-			}).collect(Collectors.toList());
-
+			List<Map<String, Object>> dtos = userService.getAllUsersForAdmin(request);
 			return ResponseEntity.ok(dtos);
+		} catch (UnauthorizedException | ForbiddenException e) {
+			logger.error("회원 목록 조회 권한 오류", e);
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
 		} catch (Exception e) {
 			logger.error("회원 목록 조회 중 오류가 발생했습니다.", e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -201,21 +195,15 @@ public class UserController {
 		}
 	}
 
-	// 회원 상세 조회
+	// 회원 상세 조회 (관리자, 회원은 자신의 정보만 조회 가능)
 	@GetMapping("/{userLogin}")
-	public ResponseEntity<?> getUserDetail(@PathVariable String userLogin) {
+	public ResponseEntity<?> getUserDetail(@PathVariable String userLogin, HttpServletRequest request) {
 		try {
-			User user = userService.getUserByLogin(userLogin);
-			Map<String, Object> dto = Map.of(
-				"userLogin", user.getUserLogin(),
-				"userName", user.getUserName(),
-				"email", user.getEmail(),
-				"phoneNumber", user.getPhoneNumber(),
-				"joinDate", user.getJoinDate(),
-				"userGrade", user.getUserGrade(),
-				"status", user.isStatus()
-			);
+			Map<String, Object> dto = userService.getUserDetail(userLogin, request);
 			return ResponseEntity.ok(dto);
+		} catch (UnauthorizedException | ForbiddenException e) {
+			logger.error("회원 상세 조회 권한 오류", e);
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
 		} catch (Exception e) {
 			logger.error("회원 상세 조회 중 오류가 발생했습니다.", e);
 			return ResponseEntity.status(HttpStatus.NOT_FOUND)
