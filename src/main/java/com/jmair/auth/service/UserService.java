@@ -7,6 +7,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.jmair.common.exeption.TokenExpiredException;
+import com.jmair.common.exeption.TokenInvalidException;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,21 +32,38 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class UserService {
+public class UserService implements TokenValidator, UserLookupService {
 
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final JwtUtil jwtUtil;
-	private final TokenService tokenService;
+
+	// TokenValidator
+	@Override
+	public User validateTokenAndGetUser(String token) throws TokenExpiredException {
+		try {
+			String userLogin = jwtUtil.validateAndExtractUserLogin(token);
+			return getUserByLogin(userLogin);
+		} catch (ExpiredJwtException e) {
+			throw new TokenExpiredException("토큰이 만료되었습니다.");
+		} catch (JwtException e) {
+			throw new TokenInvalidException("토큰이 유효하지 않습니다.");
+		}
+	}
+
+	// UserLookupService
+	@Override
+	public User getUserByLogin(String userLogin) {
+		return userRepository.findByUserLogin(userLogin)
+				.orElseThrow(() -> new IllegalArgumentException("유저 정보를 찾을 수 없습니다."));
+	}
 
 	// 회원가입
 	@Transactional
 	public void join(UserDTO userDTO) {
-		// 유저 ID가 이미 존재하는지 체크
 		if (userRepository.existsByUserLogin(userDTO.getUserLogin())) {
 			throw new IllegalArgumentException("이미 존재하는 회원입니다.");
 		}
-		// 비밀번호를 BCrypt 해싱하여 저장
 		String encodedPassword = passwordEncoder.encode(userDTO.getPassword());
 
 		User user = new User();
@@ -62,7 +83,7 @@ public class UserService {
 	@Transactional
 	public Tokens login(LoginDTO loginDTO) {
 		User user = userRepository.findByUserLogin(loginDTO.getUserLogin())
-			.orElseThrow(() -> new IllegalArgumentException("아이디 또는 비밀번호가 일치하지 않습니다."));
+				.orElseThrow(() -> new IllegalArgumentException("아이디 또는 비밀번호가 일치하지 않습니다."));
 
 		if (!user.isStatus()) {
 			throw new IllegalArgumentException("탈퇴한 회원입니다. 로그인할 수 없습니다.");
@@ -108,8 +129,8 @@ public class UserService {
 		result.put("accessToken", accessToken);
 		result.put("refreshToken", refreshToken);
 		result.put("user", Map.of(
-			"userLogin", user.getUserLogin(),
-			"userName", user.getUserName()
+				"userLogin", user.getUserLogin(),
+				"userName", user.getUserName()
 		));
 		return result;
 	}
@@ -144,16 +165,10 @@ public class UserService {
 		result.put("accessToken", accessToken);
 		result.put("refreshToken", refreshToken);
 		result.put("user", Map.of(
-			"userLogin", user.getUserLogin(),
-			"userName", user.getUserName()
+				"userLogin", user.getUserLogin(),
+				"userName", user.getUserName()
 		));
 		return result;
-	}
-
-	// 로그인한 사용자 정보 조회
-	public User getUserByLogin(String userLogin) {
-		return userRepository.findByUserLogin(userLogin)
-			.orElseThrow(() -> new IllegalArgumentException("유저 정보를 찾을 수 없습니다."));
 	}
 
 	// 전체 회원 조회 (관리자용)
@@ -163,11 +178,11 @@ public class UserService {
 		if (accessToken == null) {
 			throw new UnauthorizedException("로그인 정보가 없습니다.");
 		}
-		User currentUser = tokenService.validateTokenAndGetUser(accessToken);
+		User currentUser = validateTokenAndGetUser(accessToken);
 		if (!(currentUser.getUserGrade() == UserGrade.ENGINEER ||
-			currentUser.getUserGrade() == UserGrade.ADMIN ||
-			currentUser.getUserGrade() == UserGrade.SUPERADMIN ||
-			currentUser.getUserGrade() == UserGrade.ADMINWATCHER)) {
+				currentUser.getUserGrade() == UserGrade.ADMIN ||
+				currentUser.getUserGrade() == UserGrade.SUPERADMIN ||
+				currentUser.getUserGrade() == UserGrade.ADMINWATCHER)) {
 			throw new ForbiddenException("관리자만 회원 목록을 조회할 수 있습니다.");
 		}
 		List<User> users = userRepository.findAll();
@@ -190,28 +205,27 @@ public class UserService {
 		if (accessToken == null) {
 			throw new UnauthorizedException("로그인 정보가 없습니다.");
 		}
-		User currentUser = tokenService.validateTokenAndGetUser(accessToken);
-		// 관리자가 아니라면, 요청한 userLogin과 로그인한 사용자의 userLogin이 일치해야 함
+		User currentUser = validateTokenAndGetUser(accessToken);
 		if (!(currentUser.getUserGrade() == UserGrade.ENGINEER ||
-			currentUser.getUserGrade() == UserGrade.ADMIN ||
-			currentUser.getUserGrade() == UserGrade.SUPERADMIN ||
-			currentUser.getUserGrade() == UserGrade.ADMINWATCHER) &&
-			!currentUser.getUserLogin().equals(userLogin)) {
+				currentUser.getUserGrade() == UserGrade.ADMIN ||
+				currentUser.getUserGrade() == UserGrade.SUPERADMIN ||
+				currentUser.getUserGrade() == UserGrade.ADMINWATCHER) &&
+				!currentUser.getUserLogin().equals(userLogin)) {
 			throw new ForbiddenException("자신의 회원 정보만 조회할 수 있습니다.");
 		}
 		User user = getUserByLogin(userLogin);
 		return Map.of(
-			"userLogin", user.getUserLogin(),
-			"userName", user.getUserName(),
-			"email", user.getEmail(),
-			"phoneNumber", user.getPhoneNumber(),
-			"joinDate", user.getJoinDate(),
-			"userGrade", user.getUserGrade(),
-			"status", user.isStatus()
+				"userLogin", user.getUserLogin(),
+				"userName", user.getUserName(),
+				"email", user.getEmail(),
+				"phoneNumber", user.getPhoneNumber(),
+				"joinDate", user.getJoinDate(),
+				"userGrade", user.getUserGrade(),
+				"status", user.isStatus()
 		);
 	}
 
-	// 쿠키에서 access_token 추출 메서드
+	// 쿠키에서 access_token 추출
 	private String extractAccessTokenFromRequest(HttpServletRequest request) {
 		if (request.getCookies() != null) {
 			for (Cookie cookie : request.getCookies()) {
@@ -233,7 +247,7 @@ public class UserService {
 	@Transactional
 	public void deleteUser(String userLogin) {
 		User user = userRepository.findByUserLogin(userLogin)
-			.orElseThrow(() -> new IllegalArgumentException("유저 정보를 찾을 수 없습니다."));
+				.orElseThrow(() -> new IllegalArgumentException("유저 정보를 찾을 수 없습니다."));
 
 		if (!user.isStatus()) {
 			throw new IllegalArgumentException("이미 탈퇴한 회원입니다.");
@@ -243,5 +257,4 @@ public class UserService {
 		user.setDeleteDate(LocalDateTime.now());
 		userRepository.save(user);
 	}
-
 }

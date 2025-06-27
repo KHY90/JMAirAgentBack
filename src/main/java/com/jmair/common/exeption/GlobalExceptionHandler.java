@@ -25,12 +25,12 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(TokenExpiredException.class)
 	public ResponseEntity<?> TokenExpiredException(TokenExpiredException  ex) {
-		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
 	}
 
 	@ExceptionHandler(TokenInvalidException.class)
 	public ResponseEntity<?> TokenInvalidException(TokenInvalidException  ex) {
-		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
 	}
 
 	@ExceptionHandler(Exception.class)

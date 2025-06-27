@@ -14,20 +14,21 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 
 @Service
-public class TokenService {
+public class TokenService implements TokenValidator{
 
 	private final JwtUtil jwtUtil;
-	private final UserService userService;
+	private final UserLookupService userLookupService;
 
-	public TokenService(JwtUtil jwtUtil, UserService userService) {
+	public TokenService(JwtUtil jwtUtil, UserLookupService userLookupService) {
 		this.jwtUtil = jwtUtil;
-		this.userService = userService;
+		this.userLookupService = userLookupService;
 	}
 
+	@Override
 	public User validateTokenAndGetUser(String token) throws TokenExpiredException {
 		try {
 			String userLogin = jwtUtil.validateAndExtractUserLogin(token);
-			return userService.getUserByLogin(userLogin);
+			return userLookupService.getUserByLogin(userLogin); // 변경
 		} catch (ExpiredJwtException e) {
 			throw new TokenExpiredException("토큰이 만료되었습니다.");
 		} catch (JwtException e) {
