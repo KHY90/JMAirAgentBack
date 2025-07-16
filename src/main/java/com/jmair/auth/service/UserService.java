@@ -257,4 +257,24 @@ public class UserService implements TokenValidator, UserLookupService {
 		user.setDeleteDate(LocalDateTime.now());
 		userRepository.save(user);
 	}
+
+	// 엔지니어로 등급 변경 (관리자용)
+	@Transactional
+	public void promoteToEngineer(String userLogin, HttpServletRequest request) {
+		String accessToken = extractAccessTokenFromRequest(request);
+		if (accessToken == null) {
+			throw new UnauthorizedException("로그인 정보가 없습니다.");
+		}
+		User currentUser = validateTokenAndGetUser(accessToken);
+		if (!(currentUser.getUserGrade() == UserGrade.ADMIN ||
+			currentUser.getUserGrade() == UserGrade.SUPERADMIN)) {
+			throw new ForbiddenException("관리자만 등급을 변경할 수 있습니다.");
+		}
+
+		User userToPromote = userRepository.findByUserLogin(userLogin)
+			.orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
+
+		userToPromote.setUserGrade(UserGrade.ENGINEER);
+		userRepository.save(userToPromote);
+	}
 }

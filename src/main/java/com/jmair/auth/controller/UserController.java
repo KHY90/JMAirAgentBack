@@ -259,4 +259,21 @@ public class UserController {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("회원 탈퇴 중 오류가 발생했습니다.");
 		}
 	}
+
+	// 관리자용: 사용자 등급을 ENGINEER로 변경
+	@PutMapping("/engineer/{userLogin}")
+	public ResponseEntity<?> promoteToEngineer(@PathVariable String userLogin, HttpServletRequest request) {
+		try {
+			userService.promoteToEngineer(userLogin, request);
+			return ResponseEntity.ok(userLogin + " 님의 등급이 ENGINEER로 변경되었습니다.");
+		} catch (UnauthorizedException | ForbiddenException e) {
+			logger.error("등급 변경 권한 오류", e);
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+		} catch (Exception e) {
+			logger.error("등급 변경 중 오류가 발생했습니다.", e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("등급 변경 중 오류가 발생했습니다.");
+		}
+	}
 }
