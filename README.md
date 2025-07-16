@@ -1,8 +1,8 @@
-# JMAirBack - 에어컨 판매, 설치, AS 통합 관리 시스템
+# 진명에어컨 에이전트 - 에어컨 판매, 설치, AS 통합 관리 시스템
 
 ## 1. 프로젝트 소개
 
-JMAirBack은 에어컨 판매, 설치, 세척, AS 및 중고 거래까지 모든 과정을 한 곳에서 관리할 수 있는 백엔드 시스템입니다. 사용자는 회원가입 및 소셜 로그인(네이버, 카카오)을 통해 서비스를 이용할 수 있으며, 관리자는 모든 요청을 효율적으로 관리하고 처리할 수 있습니다.
+진명에어컨 에이전트는 에어컨 판매, 설치, 세척, AS 및 중고 거래까지 모든 과정을 한 곳에서 관리할 수 있는 백엔드 시스템입니다. 사용자는 회원가입 및 소셜 로그인(네이버, 카카오)을 통해 서비스를 이용할 수 있으며, 관리자는 모든 요청을 효율적으로 관리하고 처리할 수 있습니다.
 
 ## 2. 주요 기능
 
@@ -115,38 +115,89 @@ API 문서는 서버 실행 후 `http://localhost:8080/swagger-ui.html` 에서 �
    cd JMAirBack
    ```
 
-2. **application.properties 설정**
-   `src/main/resources/application.properties` 파일에 데이터베이스 및 소셜 로그인 설정을 추가해야 합니다.
-   ```properties
-   # Database
-   spring.datasource.url=jdbc:mysql://localhost:3306/your-db
-   spring.datasource.username=your-username
-   spring.datasource.password=your-password
-   spring.jpa.hibernate.ddl-auto=update
+   2. **application.yml 설정**
+      `src/main/resources/application.yml` 파일에 데이터베이스 및 소셜 로그인 설정을 추가해야 합니다.
+      ```
+      spring:
+         application:
+            name: JMair-agent
 
-   # Naver Login
-   spring.naver.client-id=YOUR_NAVER_CLIENT_ID
-   spring.naver.client-secret=YOUR_NAVER_CLIENT_SECRET
-   spring.naver.redirect-uri=http://localhost:3000/auth/naver
-   spring.naver.uri=https://nid.naver.com/oauth2.0/token
-   spring.naver.check-id=https://openapi.naver.com/v1/nid/me
+      cors:
+         allowed-origins: "http://localhost:3000"
+         allowed-methods: "GET,POST,PUT,DELETE,OPTIONS"
+         allowed-headers: "*"
 
-   # Kakao Login
-   spring.kakao.client-id=YOUR_KAKAO_CLIENT_ID
-   spring.kakao.redirect-uri=http://localhost:8080/api/v1/auth/kakao/callback
-   spring.kakao.redirect=http://localhost:3000/auth/kakao
-   spring.kakao.token-uri=https://kauth.kakao.com/oauth/token
-   spring.kakao.profile-uri=https://kapi.kakao.com/v2/user/me
+      datasource:
+         url:      ${SPRING_DATASOURCE_URL}
+         username: ${SPRING_DATASOURCE_USERNAME}
+         password: ${SPRING_DATASOURCE_PASSWORD}
+         driver-class-name: com.mysql.cj.jdbc.Driver
+      
+      jpa:
+         hibernate:
+            ddl-auto: create
+         show-sql: true
+         database-platform: org.hibernate.dialect.MySQL8Dialect
+      
+      jwt:
+        secret-key: ${JWT_SECRET}  
+      
+      naver:
+         client-id:     ${NAVER_CLIENT_ID}
+         client-secret: ${NAVER_CLIENT_SECRET}
+         redirect-uri:  "http://localhost:3000"
+         uri:           "https://nid.naver.com/oauth2.0/token"
+         check-id:      "https://openapi.naver.com/v1/nid/me"
+         
+      kakao:
+         client-id:     ${KAKAO_CLIENT_ID}
+         redirect-uri:  "http://localhost:8080/api/v1/auth/kakao/callback"
+         token-uri:     "https://kauth.kakao.com/oauth/token"
+         profile-uri:   "https://kapi.kakao.com/v2/user/me"
+         redirect:      "http://localhost:3000"
+      
+      server:
+         servlet:
+            encoding:
+               force:   true
+               charset: UTF-8
+               enabled: true
+      ```
 
-   # JWT Secret Key
-   jwt.secret=YOUR_JWT_SECRET_KEY
-   ```
+   3. **.env 설정**
+      `JMAirBack\.env` 파일에 환경변수 값을 추가해야 합니다.
+      ```
+      MYSQL_DATABASE=
+      MYSQL_USER=
+      MYSQL_PASSWORD=
+      MYSQL_ROOT_PASSWORD=
+      
+      SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/데이터베이스이름?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME=
+      SPRING_DATASOURCE_PASSWORD=
+      
+      # JWT Secret
+      JWT_SECRET=
+      
+      # Naver API 
+      NAVER_CLIENT_ID=
+      NAVER_CLIENT_SECRET=
+      
+      # Kakao API
+      KAKAO_CLIENT_ID=
+      ```
 
 3. **애플리케이션 실행**
    ```bash
    ./gradlew bootRun
    ```
 
-4. **API 문서 확인**
+4. **도커컴포즈를 이용한 실행**
+   ```bash
+   docker-compose build --no-cache --pull
+   docker-compose up -d
+   ```
+
+5. **API 문서 확인**
    - 브라우저에서 `http://localhost:8080/swagger-ui.html` 로 접속하여 API 문서를 확인합니다.
 
