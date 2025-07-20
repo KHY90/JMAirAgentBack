@@ -258,23 +258,27 @@ public class UserService implements TokenValidator, UserLookupService {
 				userRepository.save(user);
 	}
 
-	// 엔지니어 신청
-	@Transactional
-	public Map<String, Object> applyForEngineer(HttpServletRequest request) {
-		String accessToken = extractAccessTokenFromRequest(request);
-		if (accessToken == null) {
-			throw new UnauthorizedException("로그인 정보가 없습니다.");
-		}
-		User user = validateTokenAndGetUser(accessToken);
+        // 엔지니어 신청
+        @Transactional
+        public Map<String, Object> applyForEngineer(HttpServletRequest request) {
+                String accessToken = extractAccessTokenFromRequest(request);
+                if (accessToken == null) {
+                        throw new UnauthorizedException("로그인 정보가 없습니다.");
+                }
+                User user = validateTokenAndGetUser(accessToken);
 
-		user.setUserGrade(UserGrade.WAITING);
-		user.setEngineerAppliedAt(LocalDateTime.now());
+                if (user.getUserGrade() != UserGrade.USER) {
+                        throw new IllegalArgumentException("엔지니어 신청이 불가능한 등급입니다.");
+                }
 
-		return Map.of(
-				"userGrade", user.getUserGrade(),
-				"appliedAt", user.getEngineerAppliedAt()
-		);
-	}
+                user.setUserGrade(UserGrade.WAITING);
+                user.setEngineerAppliedAt(LocalDateTime.now());
+
+                return Map.of(
+                                "userGrade", user.getUserGrade(),
+                                "appliedAt", user.getEngineerAppliedAt()
+                );
+        }
 
 	// 엔지니어 신청 상태 조회
 	@Transactional(readOnly = true)
