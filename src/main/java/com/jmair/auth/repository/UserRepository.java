@@ -13,4 +13,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
         // 등급으로 조회
         java.util.List<User> findByUserGrade(com.jmair.auth.dto.UserGrade userGrade);
+
+        // 엔지니어 신청자 조회
+        java.util.List<User> findByEngineerAppliedAtIsNotNullAndUserGrade(com.jmair.auth.dto.UserGrade userGrade);
 }

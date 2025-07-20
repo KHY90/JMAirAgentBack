@@ -246,42 +246,51 @@ public class UserService implements TokenValidator, UserLookupService {
 	// 회원탈퇴
 	@Transactional
 	public void deleteUser(String userLogin) {
-	User user = userRepository.findByUserLogin(userLogin)
-			.orElseThrow(() -> new IllegalArgumentException("유저 정보를 찾을 수 없습니다."));
+		User user = userRepository.findByUserLogin(userLogin)
+				.orElseThrow(() -> new IllegalArgumentException("유저 정보를 찾을 수 없습니다."));
 
-	if (!user.isStatus()) {
-		throw new IllegalArgumentException("이미 탈퇴한 회원입니다.");
-	}
+		if (!user.isStatus()) {
+			throw new IllegalArgumentException("이미 탈퇴한 회원입니다.");
+		}
 
-	user.setStatus(false);
-	user.setDeleteDate(LocalDateTime.now());
-			userRepository.save(user);
+		user.setStatus(false);
+		user.setDeleteDate(LocalDateTime.now());
+				userRepository.save(user);
 	}
 
 	// 엔지니어 신청
 	@Transactional
-	public void applyForEngineer(HttpServletRequest request) {
-			String accessToken = extractAccessTokenFromRequest(request);
-			if (accessToken == null) {
-					throw new UnauthorizedException("로그인 정보가 없습니다.");
-			}
-			User user = validateTokenAndGetUser(accessToken);
-			user.setUserGrade(UserGrade.WAITING);
-			user.setEngineerAppliedAt(LocalDateTime.now());
-			userRepository.save(user);
+	public Map<String, Object> applyForEngineer(HttpServletRequest request) {
+		String accessToken = extractAccessTokenFromRequest(request);
+		if (accessToken == null) {
+			throw new UnauthorizedException("로그인 정보가 없습니다.");
+		}
+		User user = validateTokenAndGetUser(accessToken);
+
+		user.setUserGrade(UserGrade.WAITING);
+		user.setEngineerAppliedAt(LocalDateTime.now());
+
+		return Map.of(
+				"userGrade", user.getUserGrade(),
+				"appliedAt", user.getEngineerAppliedAt()
+		);
 	}
 
 	// 엔지니어 신청 상태 조회
 	@Transactional(readOnly = true)
 	public Map<String, Object> getEngineerStatus(HttpServletRequest request) {
-			String accessToken = extractAccessTokenFromRequest(request);
-			if (accessToken == null) {
-					throw new UnauthorizedException("로그인 정보가 없습니다.");
-			}
-			User user = validateTokenAndGetUser(accessToken);
-			return Map.of(
-							"status", user.getUserGrade(),
-							"appliedAt", user.getEngineerAppliedAt());
+		String accessToken = extractAccessTokenFromRequest(request);
+		if (accessToken == null) {
+						throw new UnauthorizedException("로그인 정보가 없습니다.");
+		}
+		User user = validateTokenAndGetUser(accessToken);
+		UserGrade grade = user.getUserGrade();
+		if (user.getEngineerAppliedAt() != null && grade == UserGrade.USER) {
+				grade = UserGrade.WAITING;
+		}
+		return Map.of(
+			"status", grade,
+			"appliedAt", user.getEngineerAppliedAt());
 	}
 
 	@Transactional(readOnly = true)
@@ -296,7 +305,8 @@ public class UserService implements TokenValidator, UserLookupService {
 			throw new ForbiddenException("관리자만 조회할 수 있습니다.");
 		}
 
-		List<User> waitingUsers = userRepository.findByUserGrade(UserGrade.WAITING);
+                List<User> waitingUsers = userRepository
+                                .findByEngineerAppliedAtIsNotNullAndUserGrade(UserGrade.USER);
 		return waitingUsers.stream()
 				.map(u -> {
 					Map<String, Object> m = new HashMap<>();
