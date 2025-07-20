@@ -9,5 +9,8 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 	boolean existsByUserLogin(String userLogin);
 
 	// 로그인
-	Optional<User> findByUserLogin(String userLogin);
+        Optional<User> findByUserLogin(String userLogin);
+
+        // 등급으로 조회
+        java.util.List<User> findByUserGrade(com.jmair.auth.dto.UserGrade userGrade);
 }

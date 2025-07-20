@@ -42,10 +42,12 @@ public class User {
 	@Column(nullable = false)
 	private boolean status;
 
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
-	private UserGrade userGrade;
+        @Enumerated(EnumType.STRING)
+        @Column(nullable = false,
+                columnDefinition = "ENUM('SUPERADMIN','ADMIN','ADMINWATCHER','ENGINEER','WAITING','USER','NOUSER')")
+        private UserGrade userGrade;
 
-	private LocalDateTime joinDate;
-	private LocalDateTime deleteDate;
+    private LocalDateTime joinDate;
+    private LocalDateTime engineerAppliedAt;
+    private LocalDateTime deleteDate;
 }

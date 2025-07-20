@@ -246,17 +246,68 @@ public class UserService implements TokenValidator, UserLookupService {
 	// 회원탈퇴
 	@Transactional
 	public void deleteUser(String userLogin) {
-		User user = userRepository.findByUserLogin(userLogin)
-				.orElseThrow(() -> new IllegalArgumentException("유저 정보를 찾을 수 없습니다."));
+	User user = userRepository.findByUserLogin(userLogin)
+			.orElseThrow(() -> new IllegalArgumentException("유저 정보를 찾을 수 없습니다."));
 
-		if (!user.isStatus()) {
-			throw new IllegalArgumentException("이미 탈퇴한 회원입니다.");
+	if (!user.isStatus()) {
+		throw new IllegalArgumentException("이미 탈퇴한 회원입니다.");
+	}
+
+	user.setStatus(false);
+	user.setDeleteDate(LocalDateTime.now());
+			userRepository.save(user);
+	}
+
+	// 엔지니어 신청
+	@Transactional
+	public void applyForEngineer(HttpServletRequest request) {
+			String accessToken = extractAccessTokenFromRequest(request);
+			if (accessToken == null) {
+					throw new UnauthorizedException("로그인 정보가 없습니다.");
+			}
+			User user = validateTokenAndGetUser(accessToken);
+			user.setUserGrade(UserGrade.WAITING);
+			user.setEngineerAppliedAt(LocalDateTime.now());
+			userRepository.save(user);
+	}
+
+	// 엔지니어 신청 상태 조회
+	@Transactional(readOnly = true)
+	public Map<String, Object> getEngineerStatus(HttpServletRequest request) {
+			String accessToken = extractAccessTokenFromRequest(request);
+			if (accessToken == null) {
+					throw new UnauthorizedException("로그인 정보가 없습니다.");
+			}
+			User user = validateTokenAndGetUser(accessToken);
+			return Map.of(
+							"status", user.getUserGrade(),
+							"appliedAt", user.getEngineerAppliedAt());
+	}
+
+	@Transactional(readOnly = true)
+	public List<Map<String, Object>> getEngineerApplicants(HttpServletRequest request) {
+		String accessToken = extractAccessTokenFromRequest(request);
+		if (accessToken == null) {
+			throw new UnauthorizedException("로그인 정보가 없습니다.");
+		}
+		User currentUser = validateTokenAndGetUser(accessToken);
+		if (!(currentUser.getUserGrade() == UserGrade.ADMIN ||
+				currentUser.getUserGrade() == UserGrade.SUPERADMIN)) {
+			throw new ForbiddenException("관리자만 조회할 수 있습니다.");
 		}
 
-		user.setStatus(false);
-		user.setDeleteDate(LocalDateTime.now());
-		userRepository.save(user);
+		List<User> waitingUsers = userRepository.findByUserGrade(UserGrade.WAITING);
+		return waitingUsers.stream()
+				.map(u -> {
+					Map<String, Object> m = new HashMap<>();
+					m.put("userLogin", u.getUserLogin());
+					m.put("userName",  u.getUserName());
+					m.put("appliedAt", u.getEngineerAppliedAt());
+					return m;
+				})
+				.collect(Collectors.toList());
 	}
+
 
 	// 엔지니어로 등급 변경 (관리자용)
 	@Transactional

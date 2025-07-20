@@ -247,18 +247,63 @@ public class UserController {
 		return ResponseEntity.ok("로그아웃 성공");
 	}
 
-	// 회원탈퇴
-	@PutMapping("/delete")
-	public ResponseEntity<?> deleteUser(@RequestParam String userLogin) {
-		try {
-			userService.deleteUser(userLogin);
-			return ResponseEntity.ok("회원 탈퇴가 완료되었습니다.");
-		} catch (IllegalArgumentException e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("회원 탈퇴 중 오류가 발생했습니다.");
+        // 회원탈퇴
+        @PutMapping("/delete")
+        public ResponseEntity<?> deleteUser(@RequestParam String userLogin) {
+			try {
+				userService.deleteUser(userLogin);
+				return ResponseEntity.ok("회원 탈퇴가 완료되었습니다.");
+			} catch (IllegalArgumentException e) {
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+			} catch (Exception e) {
+				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("회원 탈퇴 중 오류가 발생했습니다.");
+			}
 		}
-	}
+
+        // 엔지니어 신청
+        @PostMapping("/engineer")
+        public ResponseEntity<?> applyForEngineer(HttpServletRequest request) {
+                try {
+                        userService.applyForEngineer(request);
+                        return ResponseEntity.ok("엔지니어 신청이 접수되었습니다.");
+                } catch (UnauthorizedException e) {
+                        logger.error("엔지니어 신청 권한 오류", e);
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+                } catch (Exception e) {
+                        logger.error("엔지니어 신청 중 오류가 발생했습니다.", e);
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("엔지니어 신청 중 오류가 발생했습니다.");
+                }
+        }
+
+        // 엔지니어 신청 상태 조회
+        @GetMapping("/engineer")
+        public ResponseEntity<?> getEngineerStatus(HttpServletRequest request) {
+                try {
+                        Map<String, Object> result = userService.getEngineerStatus(request);
+                        return ResponseEntity.ok(result);
+                } catch (UnauthorizedException e) {
+                        logger.error("엔지니어 상태 조회 권한 오류", e);
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+                } catch (Exception e) {
+                        logger.error("엔지니어 상태 조회 중 오류가 발생했습니다.", e);
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("엔지니어 상태 조회 중 오류가 발생했습니다.");
+                }
+        }
+
+        // 엔지니어 신청 대기자 조회 (관리자용)
+        @GetMapping("/engineer/waiting")
+        public ResponseEntity<?> getEngineerApplicants(HttpServletRequest request) {
+                try {
+                        List<Map<String, Object>> result = userService.getEngineerApplicants(request);
+                        return ResponseEntity.ok(result);
+                } catch (UnauthorizedException | ForbiddenException e) {
+                        logger.error("엔지니어 대기자 조회 권한 오류", e);
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+                } catch (Exception e) {
+                        logger.error("엔지니어 대기자 조회 중 오류가 발생했습니다.", e);
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("엔지니어 대기자 조회 중 오류가 발생했습니다.");
+                }
+        }
 
 	// 관리자용: 사용자 등급을 ENGINEER로 변경
 	@PutMapping("/engineer/{userLogin}")
