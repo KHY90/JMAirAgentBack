@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import com.jmair.auth.dto.response.ErrorResponseDTO;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -266,20 +267,22 @@ public class UserController {
 
 	// 엔지니어 신청
 	@PutMapping("/engineer")
-        public ResponseEntity<EngineerApplyDTO> applyForEngineer(HttpServletRequest request) {
-                try {
-                        EngineerApplyDTO result = userService.applyForEngineer(request);
-                        return ResponseEntity.ok(result);
+	public ResponseEntity<?> applyForEngineer(HttpServletRequest request) {
+		try {
+			EngineerApplyDTO result = userService.applyForEngineer(request);
+			return ResponseEntity.ok(result);
 		} catch (UnauthorizedException e) {
 			logger.error("엔지니어 신청 권한 오류", e);
+			ErrorResponseDTO errorResponse = new ErrorResponseDTO(e.getMessage());
 			return ResponseEntity
-					.status(HttpStatus.UNAUTHORIZED)
-					.body(Map.of("error", e.getMessage()));
+				.status(HttpStatus.UNAUTHORIZED)
+				.body(errorResponse);
 		} catch (Exception e) {
 			logger.error("엔지니어 신청 중 오류가 발생했습니다.", e);
+			ErrorResponseDTO errorResponse = new ErrorResponseDTO(e.getMessage());
 			return ResponseEntity
-					.status(HttpStatus.INTERNAL_SERVER_ERROR)
-					.body(Map.of("error", "엔지니어 신청 중 오류가 발생했습니다."));
+				.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body(errorResponse);
 		}
 	}
 
