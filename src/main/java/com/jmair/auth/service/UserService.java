@@ -209,7 +209,8 @@ public class UserService implements TokenValidator, UserLookupService {
 		if (!(currentUser.getUserGrade() == UserGrade.ENGINEER ||
 				currentUser.getUserGrade() == UserGrade.ADMIN ||
 				currentUser.getUserGrade() == UserGrade.SUPERADMIN ||
-				currentUser.getUserGrade() == UserGrade.ADMINWATCHER) &&
+				currentUser.getUserGrade() == UserGrade.ADMINWATCHER ||
+				currentUser.getUserGrade() == UserGrade.WAITING) &&
 				!currentUser.getUserLogin().equals(userLogin)) {
 			throw new ForbiddenException("자신의 회원 정보만 조회할 수 있습니다.");
 		}
