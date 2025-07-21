@@ -25,6 +25,10 @@ import com.jmair.auth.dto.LoginDTO;
 import com.jmair.auth.dto.Tokens;
 import com.jmair.auth.dto.UserDTO;
 import com.jmair.auth.dto.UserGrade;
+import com.jmair.auth.dto.response.EngineerApplicantDTO;
+import com.jmair.auth.dto.response.EngineerApplyDTO;
+import com.jmair.auth.dto.response.EngineerStatusDTO;
+import com.jmair.auth.dto.response.UserResponseDTO;
 import com.jmair.auth.entity.User;
 import com.jmair.auth.service.TokenService;
 import com.jmair.auth.service.UserService;
@@ -181,10 +185,10 @@ public class UserController {
 
 	// 관리자용: 전체 회원 목록 조회
 	@GetMapping("/all")
-	public ResponseEntity<?> getAllUsers(HttpServletRequest request) {
-		try {
-			List<Map<String, Object>> dtos = userService.getAllUsersForAdmin(request);
-			return ResponseEntity.ok(dtos);
+        public ResponseEntity<?> getAllUsers(HttpServletRequest request) {
+                try {
+                        List<UserResponseDTO> dtos = userService.getAllUsersForAdmin(request);
+                        return ResponseEntity.ok(dtos);
 		} catch (UnauthorizedException | ForbiddenException e) {
 			logger.error("회원 목록 조회 권한 오류", e);
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
@@ -197,10 +201,10 @@ public class UserController {
 
 	// 회원 상세 조회 (관리자, 회원은 자신의 정보만 조회 가능)
 	@GetMapping("/{userLogin}")
-	public ResponseEntity<?> getUserDetail(@PathVariable String userLogin, HttpServletRequest request) {
-		try {
-			Map<String, Object> dto = userService.getUserDetail(userLogin, request);
-			return ResponseEntity.ok(dto);
+        public ResponseEntity<?> getUserDetail(@PathVariable String userLogin, HttpServletRequest request) {
+                try {
+                        UserResponseDTO dto = userService.getUserDetail(userLogin, request);
+                        return ResponseEntity.ok(dto);
 		} catch (UnauthorizedException | ForbiddenException e) {
 			logger.error("회원 상세 조회 권한 오류", e);
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
@@ -262,10 +266,10 @@ public class UserController {
 
 	// 엔지니어 신청
 	@PutMapping("/engineer")
-	public ResponseEntity<Map<String, Object>> applyForEngineer(HttpServletRequest request) {
-		try {
-			Map<String, Object> result = userService.applyForEngineer(request);
-			return ResponseEntity.ok(result);
+        public ResponseEntity<EngineerApplyDTO> applyForEngineer(HttpServletRequest request) {
+                try {
+                        EngineerApplyDTO result = userService.applyForEngineer(request);
+                        return ResponseEntity.ok(result);
 		} catch (UnauthorizedException e) {
 			logger.error("엔지니어 신청 권한 오류", e);
 			return ResponseEntity
@@ -281,10 +285,10 @@ public class UserController {
 
 	// 엔지니어 신청 상태 조회
 	@GetMapping("/engineer")
-	public ResponseEntity<?> getEngineerStatus(HttpServletRequest request) {
-			try {
-					Map<String, Object> result = userService.getEngineerStatus(request);
-					return ResponseEntity.ok(result);
+        public ResponseEntity<?> getEngineerStatus(HttpServletRequest request) {
+                        try {
+                                        EngineerStatusDTO result = userService.getEngineerStatus(request);
+                                        return ResponseEntity.ok(result);
 			} catch (UnauthorizedException e) {
 					logger.error("엔지니어 상태 조회 권한 오류", e);
 					return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
@@ -296,10 +300,10 @@ public class UserController {
 
 	// 엔지니어 신청 대기자 조회 (관리자용)
 	@GetMapping("/engineer/waiting")
-	public ResponseEntity<?> getEngineerApplicants(HttpServletRequest request) {
-			try {
-					List<Map<String, Object>> result = userService.getEngineerApplicants(request);
-					return ResponseEntity.ok(result);
+        public ResponseEntity<?> getEngineerApplicants(HttpServletRequest request) {
+                        try {
+                                        List<EngineerApplicantDTO> result = userService.getEngineerApplicants(request);
+                                        return ResponseEntity.ok(result);
 			} catch (UnauthorizedException | ForbiddenException e) {
 					logger.error("엔지니어 대기자 조회 권한 오류", e);
 					return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());

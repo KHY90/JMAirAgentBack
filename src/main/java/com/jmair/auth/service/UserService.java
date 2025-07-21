@@ -20,6 +20,10 @@ import com.jmair.auth.dto.SocialDTO;
 import com.jmair.auth.dto.Tokens;
 import com.jmair.auth.dto.UserDTO;
 import com.jmair.auth.dto.UserGrade;
+import com.jmair.auth.dto.response.EngineerApplicantDTO;
+import com.jmair.auth.dto.response.EngineerApplyDTO;
+import com.jmair.auth.dto.response.EngineerStatusDTO;
+import com.jmair.auth.dto.response.UserResponseDTO;
 import com.jmair.auth.entity.User;
 import com.jmair.auth.repository.UserRepository;
 import com.jmair.auth.util.JwtUtil;
@@ -172,8 +176,8 @@ public class UserService implements TokenValidator, UserLookupService {
 	}
 
 	// 전체 회원 조회 (관리자용)
-	@Transactional(readOnly = true)
-	public List<Map<String, Object>> getAllUsersForAdmin(HttpServletRequest request) {
+    @Transactional(readOnly = true)
+    public List<UserResponseDTO> getAllUsersForAdmin(HttpServletRequest request) {
 		String accessToken = extractAccessTokenFromRequest(request);
 		if (accessToken == null) {
 			throw new UnauthorizedException("로그인 정보가 없습니다.");
@@ -185,22 +189,22 @@ public class UserService implements TokenValidator, UserLookupService {
 				currentUser.getUserGrade() == UserGrade.ADMINWATCHER)) {
 			throw new ForbiddenException("관리자만 회원 목록을 조회할 수 있습니다.");
 		}
-		List<User> users = userRepository.findAll();
-		return users.stream().map(u -> {
-			Map<String, Object> map = new HashMap<>();
-			map.put("userLogin", u.getUserLogin());
-			map.put("userName", u.getUserName());
-			map.put("email", u.getEmail());
-			map.put("phoneNumber", u.getPhoneNumber());
-			map.put("joinDate", u.getJoinDate());
-			map.put("userGrade", u.getUserGrade());
-			map.put("status", u.isStatus());
-			return map;
-		}).collect(Collectors.toList());
+        List<User> users = userRepository.findAll();
+        return users.stream().map(u -> {
+                UserResponseDTO dto = new UserResponseDTO();
+                dto.setUserLogin(u.getUserLogin());
+                dto.setUserName(u.getUserName());
+                dto.setEmail(u.getEmail());
+                dto.setPhoneNumber(u.getPhoneNumber());
+                dto.setJoinDate(u.getJoinDate());
+                dto.setUserGrade(u.getUserGrade());
+                dto.setStatus(u.isStatus());
+                return dto;
+        }).collect(Collectors.toList());
 	}
 
 	// 회원 상세 조회 (관리자 또는 자신만 조회)
-	public Map<String, Object> getUserDetail(String userLogin, HttpServletRequest request) {
+    public UserResponseDTO getUserDetail(String userLogin, HttpServletRequest request) {
 		String accessToken = extractAccessTokenFromRequest(request);
 		if (accessToken == null) {
 			throw new UnauthorizedException("로그인 정보가 없습니다.");
@@ -214,17 +218,17 @@ public class UserService implements TokenValidator, UserLookupService {
 				!currentUser.getUserLogin().equals(userLogin)) {
 			throw new ForbiddenException("자신의 회원 정보만 조회할 수 있습니다.");
 		}
-		User user = getUserByLogin(userLogin);
-		return Map.of(
-				"userLogin", user.getUserLogin(),
-				"userName", user.getUserName(),
-				"email", user.getEmail(),
-				"phoneNumber", user.getPhoneNumber(),
-				"joinDate", user.getJoinDate(),
-				"userGrade", user.getUserGrade(),
-				"status", user.isStatus()
-		);
-	}
+        User user = getUserByLogin(userLogin);
+        UserResponseDTO dto = new UserResponseDTO();
+        dto.setUserLogin(user.getUserLogin());
+        dto.setUserName(user.getUserName());
+        dto.setEmail(user.getEmail());
+        dto.setPhoneNumber(user.getPhoneNumber());
+        dto.setJoinDate(user.getJoinDate());
+        dto.setUserGrade(user.getUserGrade());
+        dto.setStatus(user.isStatus());
+        return dto;
+    }
 
 	// 쿠키에서 access_token 추출
 	private String extractAccessTokenFromRequest(HttpServletRequest request) {
@@ -260,8 +264,8 @@ public class UserService implements TokenValidator, UserLookupService {
 	}
 
         // 엔지니어 신청
-        @Transactional
-        public Map<String, Object> applyForEngineer(HttpServletRequest request) {
+    @Transactional
+    public EngineerApplyDTO applyForEngineer(HttpServletRequest request) {
                 String accessToken = extractAccessTokenFromRequest(request);
                 if (accessToken == null) {
                         throw new UnauthorizedException("로그인 정보가 없습니다.");
@@ -273,33 +277,34 @@ public class UserService implements TokenValidator, UserLookupService {
                 }
 
                 user.setUserGrade(UserGrade.WAITING);
-                user.setEngineerAppliedAt(LocalDateTime.now());
+        user.setEngineerAppliedAt(LocalDateTime.now());
 
-                return Map.of(
-                                "userGrade", user.getUserGrade(),
-                                "appliedAt", user.getEngineerAppliedAt()
-                );
-        }
+        EngineerApplyDTO dto = new EngineerApplyDTO();
+        dto.setUserGrade(user.getUserGrade());
+        dto.setAppliedAt(user.getEngineerAppliedAt());
+        return dto;
+    }
 
-	// 엔지니어 신청 상태 조회
-	@Transactional(readOnly = true)
-	public Map<String, Object> getEngineerStatus(HttpServletRequest request) {
+    // 엔지니어 신청 상태 조회
+    @Transactional(readOnly = true)
+    public EngineerStatusDTO getEngineerStatus(HttpServletRequest request) {
 		String accessToken = extractAccessTokenFromRequest(request);
 		if (accessToken == null) {
 						throw new UnauthorizedException("로그인 정보가 없습니다.");
 		}
 		User user = validateTokenAndGetUser(accessToken);
-		UserGrade grade = user.getUserGrade();
-		if (user.getEngineerAppliedAt() != null && grade == UserGrade.USER) {
-				grade = UserGrade.WAITING;
-		}
-		return Map.of(
-			"status", grade,
-			"appliedAt", user.getEngineerAppliedAt());
-	}
+        UserGrade grade = user.getUserGrade();
+        if (user.getEngineerAppliedAt() != null && grade == UserGrade.USER) {
+                        grade = UserGrade.WAITING;
+        }
+        EngineerStatusDTO dto = new EngineerStatusDTO();
+        dto.setStatus(grade);
+        dto.setAppliedAt(user.getEngineerAppliedAt());
+        return dto;
+    }
 
-	@Transactional(readOnly = true)
-	public List<Map<String, Object>> getEngineerApplicants(HttpServletRequest request) {
+    @Transactional(readOnly = true)
+    public List<EngineerApplicantDTO> getEngineerApplicants(HttpServletRequest request) {
 		String accessToken = extractAccessTokenFromRequest(request);
 		if (accessToken == null) {
 			throw new UnauthorizedException("로그인 정보가 없습니다.");
@@ -312,15 +317,15 @@ public class UserService implements TokenValidator, UserLookupService {
 
                 List<User> waitingUsers = userRepository
                                 .findByEngineerAppliedAtIsNotNullAndUserGrade(UserGrade.USER);
-		return waitingUsers.stream()
-				.map(u -> {
-					Map<String, Object> m = new HashMap<>();
-					m.put("userLogin", u.getUserLogin());
-					m.put("userName",  u.getUserName());
-					m.put("appliedAt", u.getEngineerAppliedAt());
-					return m;
-				})
-				.collect(Collectors.toList());
+        return waitingUsers.stream()
+                                .map(u -> {
+                                        EngineerApplicantDTO m = new EngineerApplicantDTO();
+                                        m.setUserLogin(u.getUserLogin());
+                                        m.setUserName(u.getUserName());
+                                        m.setAppliedAt(u.getEngineerAppliedAt());
+                                        return m;
+                                })
+                                .collect(Collectors.toList());
 	}
 
 
